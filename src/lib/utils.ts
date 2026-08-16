@@ -26,8 +26,12 @@ export function startOfWeek(d: Date = new Date()): Date {
   return x;
 }
 
-export function nextWeekday(start: Date, weekday: number): Date {
-  const d = new Date(start);
+// Returns the next future occurrence of `weekday` strictly after `from`.
+// weekday: 0 = Sun, 1 = Mon, ... 6 = Sat. Today never matches —
+// if today is Wednesday, asking for Wednesday returns the *following* Wednesday.
+export function nextFutureWeekday(from: Date, weekday: number): Date {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
   const cur = d.getDay();
   const diff = (weekday - cur + 7) % 7 || 7;
   d.setDate(d.getDate() + diff);

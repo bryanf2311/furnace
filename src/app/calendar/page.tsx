@@ -37,14 +37,6 @@ export default function CalendarPage() {
     return items.find((m) => m.date === date);
   }
 
-  function isFridayHang(date: Date): boolean {
-    if (date.getDay() !== 5) return false;
-    const ref = new Date(date);
-    const start = new Date(ref.getFullYear(), 0, 1);
-    const offset = Math.floor((ref.getTime() - start.getTime()) / (7 * 86400000));
-    return offset % 2 === 0;
-  }
-
   const todayKey = toDateKey(new Date());
   const monthYear = (d: Date) => d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
@@ -86,8 +78,6 @@ export default function CalendarPage() {
               <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {week.map((c) => {
                   const m = meetingFor(c.key);
-                  const isFri = c.date.getDay() === 5;
-                  const hangDay = isFridayHang(c.date);
                   const isToday = c.key === todayKey;
                   const isPast = c.key < todayKey;
                   const dayNum = c.date.getDate();
@@ -124,11 +114,6 @@ export default function CalendarPage() {
                         {m && (
                           <span className="mono-cap text-[9px] sm:text-[10px] text-iron">
                             {MEETING_SHORT[m.kind]}
-                          </span>
-                        )}
-                        {!m && isFri && hangDay && (
-                          <span className="mono-cap text-[9px] sm:text-[10px] text-parchment-400 dark:text-parchment-500">
-                            FRI
                           </span>
                         )}
                       </div>

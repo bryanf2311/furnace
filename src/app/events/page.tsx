@@ -8,7 +8,7 @@ import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
 import { upsertMeeting, useMeetings } from "@/lib/firestore";
-import { fmtDate, fmtDateShort, nextWeekday, startOfWeek, toDateKey } from "@/lib/utils";
+import { fmtDate, fmtDateShort, nextFutureWeekday, toDateKey } from "@/lib/utils";
 import type { MeetingKind } from "@/lib/types";
 import { MEETING_SHORT } from "@/lib/types";
 
@@ -19,7 +19,7 @@ export default function EventsPage() {
   const effectiveAdmin = isAdmin && viewMode === "leader";
 
   const [kind, setKind] = useState<MeetingKind>("monday");
-  const [date, setDate] = useState(() => toDateKey(nextWeekday(startOfWeek(), 1)));
+  const [date, setDate] = useState(() => toDateKey(nextFutureWeekday(new Date(), 1)));
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -38,9 +38,9 @@ export default function EventsPage() {
   }
 
   const next = {
-    monday: nextWeekday(startOfWeek(), 1),
-    wednesday: nextWeekday(startOfWeek(), 3),
-    friday: nextWeekday(startOfWeek(), 5),
+    monday: nextFutureWeekday(new Date(), 1),
+    wednesday: nextFutureWeekday(new Date(), 3),
+    friday: nextFutureWeekday(new Date(), 5),
   };
 
   function pickKind(k: MeetingKind) {
