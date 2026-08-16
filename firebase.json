@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "furnace-88ea2"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
