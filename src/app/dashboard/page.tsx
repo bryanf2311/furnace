@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CalendarPlus } from "lucide-react";
+import { ArrowUpRight, BookOpen, CalendarPlus, MapPin } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
-import { fmtDate, fmtDateShort, verseForWeek } from "@/lib/utils";
+import { fmtDate, fmtDateShort, timeAgo, verseForWeek } from "@/lib/utils";
 import { MEETING_LABELS, MEETING_SHORT } from "@/lib/types";
-import { useIdeas, useMeetings, useMessages } from "@/lib/firestore";
+import { useIdeas, useMeetings, useMessages, useReadings } from "@/lib/firestore";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="mono-cap text-iron">{children}</div>;
@@ -18,9 +18,12 @@ export default function DashboardPage() {
   const { profile, isAdmin, viewMode } = useAuth();
   const { items: meetings } = useMeetings();
   const { items: ideas } = useIdeas();
+  const { items: readings } = useReadings();
   const { items: messages } = useMessages("members");
 
-  // Only show days that have been planned. Sort chronologically.
+  const effectiveAdmin = isAdmin && viewMode === "leader";
+
+  // Only show days that have been planned, sorted chronologically.
   const planned = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
     return [...meetings]
@@ -28,27 +31,40 @@ export default function DashboardPage() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [meetings]);
 
+  const next = planned[0];
+
   const topIdeas = useMemo(() => {
     return [...ideas]
       .sort((a, b) => Object.keys(b.votes).length - Object.keys(a.votes).length)
       .slice(0, 3);
   }, [ideas]);
 
+  const currentReading = useMemo(() => {
+    return readings.find((r) => r.status === "current");
+  }, [readings]);
+
   const lastMessages = useMemo(() => {
     return [...messages].slice(-3).reverse();
   }, [messages]);
 
   const verse = verseForWeek();
-  const effectiveAdmin = isAdmin && viewMode === "leader";
 
   return (
     <Shell>
       <div className="mb-2 flex items-baseline justify-between gap-4">
         <div>
-          <SectionLabel>Welcome back</SectionLabel>
+          <SectionLabel>{effectiveAdmin ? "Welcome back" : "Hey brother"}</SectionLabel>
           <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">
-            Good to see you,{" "}
-            <span className="serif-italic text-iron">{profile?.displayName?.split(" ")[0]}</span>.
+            {effectiveAdmin ? (
+              <>
+                Good to see you,{" "}
+                <span className="serif-italic text-iron">{profile?.displayName?.split(" ")[0]}</span>.
+              </>
+            ) : (
+              <>
+                <span className="serif-italic text-iron">{profile?.displayName?.split(" ")[0]}</span>, the brothers are sharpening iron.
+              </>
+            )}
           </h1>
         </div>
         {isAdmin && (
@@ -58,44 +74,54 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
-        {planned.length > 0
-          ? "Here's what's planned and what's stirring."
-          : "Nothing on the calendar yet. The leaders will set the first gathering soon."}
-      </p>
-
       <div className="my-8">
         <CoalBed />
       </div>
 
-      {/* PLANNED DAYS */}
-      <section className="mb-12">
-        <div className="mb-5 flex items-end justify-between">
-          <div>
-            <SectionLabel>Upcoming</SectionLabel>
-            <h2 className="display mt-2 text-2xl">
-              {planned.length === 0
-                ? "No gatherings planned"
-                : planned.length === 1
-                  ? "Next gathering"
-                  : `${planned.length} gatherings ahead`}
-            </h2>
+      {/* NEXT GATHERING — always shown, the anchor */}
+      <section className="mb-10">
+        {next ? (
+          <div className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-6 sm:p-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="mono-cap text-iron">{MEETING_SHORT[next.kind]}</span>
+                <span className="display text-xl sm:text-2xl">{MEETING_LABELS[next.kind]}</span>
+              </div>
+              <span className="text-sm text-parchment-500 dark:text-parchment-400">{fmtDate(next.date)}</span>
+            </div>
+            <h2 className="display mt-3 text-3xl sm:text-4xl leading-tight">{next.title}</h2>
+            {next.reading && (
+              <p className="mono-cap mt-3 text-iron">Reading · {next.reading}</p>
+            )}
+            {next.notes && (
+              <p className="mt-4 whitespace-pre-line text-parchment-700 dark:text-parchment-300 max-w-2xl">
+                {next.notes}
+              </p>
+            )}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link
+                href="/plan"
+                className="inline-flex items-center gap-1.5 rounded bg-iron px-4 py-2 text-sm font-medium text-ink hover:bg-iron-glow"
+              >
+                <MapPin size={14} />
+                {effectiveAdmin ? "Manage plan" : "See full plan"}
+              </Link>
+              {!effectiveAdmin && (
+                <Link
+                  href="/plan"
+                  className="inline-flex items-center gap-1.5 rounded border border-parchment-200 dark:border-parchment-700 px-4 py-2 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
+                >
+                  RSVP
+                </Link>
+              )}
+            </div>
           </div>
-          <Link
-            href="/plan"
-            className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
-          >
-            Open the week
-            <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-        </div>
-
-        {planned.length === 0 ? (
+        ) : (
           <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-8 text-center">
             <CalendarPlus size={28} className="mx-auto text-parchment-400 dark:text-parchment-500" />
             <p className="serif-italic mt-3 text-parchment-500 dark:text-parchment-400">
               {effectiveAdmin
-                ? "Pick a Monday, Wednesday, or Friday and add a topic."
+                ? "No gathering planned yet. Pick a day and add a topic."
                 : "The leaders haven't set a gathering yet. Check back soon."}
             </p>
             {effectiveAdmin && (
@@ -104,9 +130,27 @@ export default function DashboardPage() {
               </Link>
             )}
           </div>
-        ) : (
+        )}
+      </section>
+
+      {/* UPCOMING (leaders get the full list, members just see the next one already shown) */}
+      {effectiveAdmin && planned.length > 1 && (
+        <section className="mb-12">
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <SectionLabel>Upcoming</SectionLabel>
+              <h2 className="display mt-2 text-2xl">{planned.length - 1} more ahead</h2>
+            </div>
+            <Link
+              href="/plan"
+              className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
+            >
+              Open the week
+              <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {planned.map((m) => (
+            {planned.slice(1).map((m) => (
               <div
                 key={m.id}
                 className="group relative overflow-hidden rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5 transition-colors hover:border-iron"
@@ -124,37 +168,25 @@ export default function DashboardPage() {
                     Reading · {m.reading}
                   </p>
                 )}
-                {m.notes && (
-                  <p className="mt-3 whitespace-pre-line text-sm text-parchment-700 dark:text-parchment-300 line-clamp-4">
-                    {m.notes}
-                  </p>
-                )}
-                <Link
-                  href="/plan"
-                  className="mt-4 inline-flex items-center gap-1 text-xs text-iron opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  {effectiveAdmin ? "Edit plan" : "Full plan"}
-                  <ArrowUpRight size={12} />
-                </Link>
               </div>
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* IDEAS + CHAT summary */}
-      <div className="grid gap-8 lg:grid-cols-5">
-        <section className="lg:col-span-3">
+      {/* IDEAS + READING + CHAT (three columns on desktop) */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        <section>
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <SectionLabel>What's stirring</SectionLabel>
-              <h2 className="display mt-2 text-2xl">Top ideas</h2>
+              <SectionLabel>Vote on what's next</SectionLabel>
+              <h2 className="display mt-2 text-2xl">Ideas</h2>
             </div>
             <Link
               href="/ideas"
               className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
             >
-              All ideas
+              All
               <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
@@ -162,48 +194,90 @@ export default function DashboardPage() {
           {topIdeas.length === 0 ? (
             <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
               <p className="serif-italic text-parchment-500 dark:text-parchment-400">
-                No ideas yet. The first spark starts with you.
+                Nothing pitched yet.
               </p>
               <Link href="/ideas" className="mt-3 inline-block text-sm text-iron hover:underline">
-                Pitch the first one →
+                Suggest something →
               </Link>
             </div>
           ) : (
             <ol className="space-y-3">
-              {topIdeas.map((idea, i) => (
+              {topIdeas.map((idea) => (
                 <li
                   key={idea.id}
-                  className="group flex items-start gap-4 rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4 hover:border-iron"
+                  className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4"
                 >
-                  <span className="display text-3xl font-semibold text-parchment-400 dark:text-parchment-600">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="flex-1">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h3 className="display text-lg">{idea.title}</h3>
-                      <span className="mono-cap text-iron">
-                        {Object.keys(idea.votes).length} vote{Object.keys(idea.votes).length === 1 ? "" : "s"}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{idea.body}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="display text-lg leading-snug">{idea.title}</h3>
+                    <span className="mono-cap shrink-0 text-iron">
+                      {Object.keys(idea.votes).length}
+                    </span>
                   </div>
+                  {idea.body && (
+                    <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{idea.body}</p>
+                  )}
                 </li>
               ))}
             </ol>
           )}
         </section>
 
-        <section className="lg:col-span-2">
+        <section>
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <SectionLabel>Latest from the room</SectionLabel>
+              <SectionLabel>Reading together</SectionLabel>
+              <h2 className="display mt-2 text-2xl">Now</h2>
+            </div>
+            <Link
+              href="/readings"
+              className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
+            >
+              All
+              <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
+
+          {currentReading ? (
+            <div className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5">
+              <div className="grid h-12 w-12 place-items-center rounded-sm bg-iron/15 text-iron">
+                <BookOpen size={22} />
+              </div>
+              <h3 className="display mt-3 text-xl leading-snug">{currentReading.title}</h3>
+              {currentReading.author && (
+                <p className="mt-1 text-sm text-parchment-500 dark:text-parchment-400">{currentReading.author}</p>
+              )}
+              {currentReading.note && (
+                <p className="mt-3 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-3">{currentReading.note}</p>
+              )}
+              <p className="mono-cap mt-3 text-parchment-500 dark:text-parchment-400">
+                Added {timeAgo(currentReading.createdAt)} by {currentReading.createdByName}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
+              <p className="serif-italic text-parchment-500 dark:text-parchment-400">
+                No book on the nightstand yet.
+              </p>
+              {effectiveAdmin && (
+                <Link href="/readings" className="mt-3 inline-block text-sm text-iron hover:underline">
+                  Add one →
+                </Link>
+              )}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <SectionLabel>From the room</SectionLabel>
               <h2 className="display mt-2 text-2xl">Chat</h2>
             </div>
             <Link
               href="/chat"
               className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
             >
-              Open chat
+              Open
               <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
@@ -214,7 +288,7 @@ export default function DashboardPage() {
                 Quiet in here. Be the first to speak up.
               </p>
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {lastMessages.map((m) => (
                   <li key={m.id} className="flex items-start gap-3">
                     <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-parchment-200 dark:bg-parchment-700 text-xs">

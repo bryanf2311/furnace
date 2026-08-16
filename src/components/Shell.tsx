@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BookOpen,
   CalendarDays,
   Compass,
   Flame,
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/plan", label: "This week", icon: Compass },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/ideas", label: "Ideas", icon: Sparkles },
+  { href: "/readings", label: "Readings", icon: BookOpen },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/admin", label: "Leaders", icon: Users, adminOnly: true },
 ];
@@ -294,7 +296,7 @@ NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
                 </button>
                 <Link
                   href="/admin?invite=1"
-                  className="mt-2 flex items-center gap-3 rounded-sm border border-parchment-200 dark:border-parchment-700 px-3 py-2.5 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-sm border border-parchment-200 dark:border-parchment-700 px-3 py-2.5 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
                 >
                   <Send size={14} />
                   <span>Invite a brother</span>

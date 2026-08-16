@@ -10,10 +10,11 @@ import { timeAgo, classNames } from "@/lib/utils";
 import type { ChatRoom } from "@/lib/types";
 
 export default function ChatPage() {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, viewMode } = useAuth();
+  const effectiveAdmin = isAdmin && viewMode === "leader";
 
   // Leaders see both rooms and can flip between them. Members only see the members room.
-  const initialRoom: ChatRoom = isAdmin ? "leaders" : "members";
+  const initialRoom: ChatRoom = effectiveAdmin ? "leaders" : "members";
   const [room, setRoom] = useState<ChatRoom>(initialRoom);
   const { items, loading } = useMessages(room);
 
@@ -60,7 +61,7 @@ export default function ChatPage() {
 
       {/* ROOM TABS */}
       <div className="mb-4 flex gap-2">
-        {isAdmin && (
+        {effectiveAdmin && (
           <button
             onClick={() => setRoom("leaders")}
             className={classNames(

@@ -16,7 +16,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
-import type { ChatRoom, Idea, Meeting, Message, RsvpStatus, UserRole } from "./types";
+import type { ChatRoom, Idea, Meeting, Message, Reading, ReadingKind, ReadingStatus, RsvpStatus, UserRole } from "./types";
 
 function ts(createdAt: unknown): number {
   if (createdAt && typeof createdAt === "object" && "toMillis" in (createdAt as Record<string, unknown>)) {
@@ -108,6 +108,7 @@ export function useIdeas() {
             createdByName: data.createdByName as string,
             createdAt: ts(data.createdAt),
             votes: (data.votes as Record<string, 1> | undefined) ?? {},
+            source: (data.source as Idea["source"]) ?? "leader",
           };
         })
       );
@@ -124,6 +125,7 @@ export async function addIdea(input: {
   body: string;
   createdBy: string;
   createdByName: string;
+  source: Idea["source"];
 }) {
   if (!db) throw new Error("Firebase not configured");
   await addDoc(collection(db, "ideas"), {
@@ -131,6 +133,62 @@ export async function addIdea(input: {
     createdAt: serverTimestamp(),
     votes: {},
   });
+}
+
+export function useReadings() {
+  const [items, setItems] = useState<Reading[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isConfigured || !db) {
+      setLoading(false);
+      return;
+    }
+    const q = query(collection(db, "readings"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setItems(
+        snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.title as string,
+            author: (data.author as string | null | undefined) ?? "",
+            kind: data.kind as ReadingKind,
+            note: (data.note as string | null | undefined) ?? "",
+            status: data.status as ReadingStatus,
+            createdBy: data.createdBy as string,
+            createdByName: data.createdByName as string,
+            createdAt: ts(data.createdAt),
+          };
+        })
+      );
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  return { items, loading };
+}
+
+export async function addReading(input: Omit<Reading, "id" | "createdAt">) {
+  if (!db) throw new Error("Firebase not configured");
+  await addDoc(collection(db, "readings"), {
+    ...input,
+    author: input.author || "",
+    note: input.note || "",
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function updateReading(id: string, patch: Partial<Reading>) {
+  if (!db) throw new Error("Firebase not configured");
+  const ref = doc(db, "readings", id);
+  await updateDoc(ref, patch as Record<string, unknown>);
+}
+
+export async function deleteReading(id: string) {
+  if (!db) throw new Error("Firebase not configured");
+  await deleteDoc(doc(db, "readings", id));
 }
 
 export async function toggleVote(ideaId: string, uid: string, voted: boolean) {

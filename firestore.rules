@@ -76,5 +76,14 @@ service cloud.firestore {
       // Update / delete: author or admin.
       allow update, delete: if isAdmin() || resource.data.uid == request.auth.uid;
     }
+
+    // Recommended readings (books, passages, articles, devotionals).
+    // Anyone signed in can read; only admins can write.
+    match /readings/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
   }
 }

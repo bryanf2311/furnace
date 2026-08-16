@@ -32,7 +32,36 @@ export interface Idea {
   createdByName: string;
   createdAt: number;
   votes: Record<string, 1>;
+  source: "leader" | "member";
 }
+
+export type ReadingStatus = "upcoming" | "current" | "finished";
+export type ReadingKind = "book" | "passage" | "article" | "devotional";
+
+export interface Reading {
+  id: string;
+  title: string;
+  author?: string;
+  kind: ReadingKind;
+  note?: string;
+  status: ReadingStatus;
+  createdBy: string;
+  createdByName: string;
+  createdAt: number;
+}
+
+export const READING_KIND_LABEL: Record<ReadingKind, string> = {
+  book: "Book",
+  passage: "Passage",
+  article: "Article",
+  devotional: "Devotional",
+};
+
+export const READING_STATUS_LABEL: Record<ReadingStatus, string> = {
+  upcoming: "Up next",
+  current: "Reading now",
+  finished: "Finished",
+};
 
 export type ChatRoom = "leaders" | "members";
 
