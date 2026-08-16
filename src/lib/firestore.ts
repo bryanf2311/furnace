@@ -261,6 +261,11 @@ export async function toggleVote(ideaId: string, uid: string, voted: boolean) {
   }
 }
 
+export async function deleteIdea(ideaId: string) {
+  if (!db) return;
+  await deleteDoc(doc(db, "ideas", ideaId));
+}
+
 export function useMessages(room: ChatRoom) {
   const [items, setItems] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);

@@ -4,20 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  BarChart3,
   BookOpen,
   CalendarDays,
-  Compass,
+  CalendarPlus,
   Flame,
   LogOut,
   MessageSquare,
   Moon,
-  PlusCircle,
   Send,
   Shield,
-  Sparkles,
   Sun,
   Users,
+  Vote,
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -27,14 +25,12 @@ import { classNames, verseForWeek } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: Flame },
-  { href: "/plan", label: "This week", icon: Compass },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/readings", label: "Reading", icon: BookOpen },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   // Leader-only
-  { href: "/plan-next", label: "Plan next event", icon: PlusCircle, adminOnly: true },
-  { href: "/ideas", label: "Ideas", icon: Sparkles, adminOnly: true },
-  { href: "/polls", label: "Polls", icon: BarChart3, adminOnly: true },
+  { href: "/events", label: "Events", icon: CalendarPlus, adminOnly: true },
+  { href: "/voting", label: "Voting", icon: Vote, adminOnly: true },
   { href: "/admin", label: "Leaders", icon: Users, adminOnly: true },
 ];
 

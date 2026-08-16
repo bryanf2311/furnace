@@ -106,15 +106,15 @@ export default function DashboardPage() {
             )}
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <Link
-                href="/plan"
+                href="/events"
                 className="inline-flex items-center gap-1.5 rounded bg-iron px-4 py-2 text-sm font-medium text-ink hover:bg-iron-glow"
               >
                 <MapPin size={14} />
-                {effectiveAdmin ? "Manage plan" : "See full plan"}
+                {effectiveAdmin ? "Manage event" : "See event"}
               </Link>
               {!effectiveAdmin && (
                 <Link
-                  href="/plan"
+                  href="/events"
                   className="inline-flex items-center gap-1.5 rounded border border-parchment-200 dark:border-parchment-700 px-4 py-2 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
                 >
                   RSVP
@@ -127,12 +127,12 @@ export default function DashboardPage() {
             <CalendarPlus size={28} className="mx-auto text-parchment-400 dark:text-parchment-500" />
             <p className="serif-italic mt-3 text-parchment-500 dark:text-parchment-400">
               {effectiveAdmin
-                ? "No gathering planned yet. Pick a day and add a topic."
-                : "The leaders haven't set a gathering yet. Check back soon."}
+                ? "No event planned yet. Pick a day and add a topic."
+                : "The leaders haven't set an event yet. Check back soon."}
             </p>
             {effectiveAdmin && (
-              <Link href="/plan" className="mt-4 inline-block text-sm text-iron hover:underline">
-                Plan a gathering →
+              <Link href="/events" className="mt-4 inline-block text-sm text-iron hover:underline">
+                Plan an event →
               </Link>
             )}
           </div>
@@ -148,10 +148,10 @@ export default function DashboardPage() {
               <h2 className="display mt-2 text-2xl">{planned.length - 1} more ahead</h2>
             </div>
             <Link
-              href="/plan"
+              href="/events"
               className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
             >
-              Open the week
+              Open events
               <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
@@ -186,11 +186,11 @@ export default function DashboardPage() {
           <section>
             <div className="mb-5 flex items-end justify-between">
               <div>
-                <SectionLabel>Vote on what's next</SectionLabel>
+                <SectionLabel>Topics & polls</SectionLabel>
                 <h2 className="display mt-2 text-2xl">Ideas</h2>
               </div>
               <Link
-                href="/ideas"
+                href="/voting"
                 className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
               >
                 All
@@ -201,9 +201,9 @@ export default function DashboardPage() {
             {topIdeas.length === 0 ? (
               <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
                 <p className="serif-italic text-parchment-500 dark:text-parchment-400">
-                  Nothing pitched yet.
+                  No ideas yet.
                 </p>
-                <Link href="/ideas" className="mt-3 inline-block text-sm text-iron hover:underline">
+                <Link href="/voting" className="mt-3 inline-block text-sm text-iron hover:underline">
                   Pitch the first one →
                 </Link>
               </div>

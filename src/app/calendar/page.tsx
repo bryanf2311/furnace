@@ -134,7 +134,7 @@ export default function CalendarPage() {
                       </div>
                       {m ? (
                         <a
-                          href="/plan"
+                          href={`/events/${m.id}`}
                           className="mt-1 block rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-100/60 dark:bg-parchment-800/60 px-1.5 py-1 text-[10px] sm:text-xs hover:border-iron"
                         >
                           <span className="block display text-parchment-900 dark:text-parchment-100 truncate text-xs sm:text-sm">
@@ -146,25 +146,7 @@ export default function CalendarPage() {
                             </span>
                           )}
                         </a>
-                      ) : (
-                        (c.date.getDay() === 1 || c.date.getDay() === 3) &&
-                        !isPast && (
-                          <a
-                            href="/plan"
-                            className="mt-1 block rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700 px-1 py-1 text-center text-[9px] sm:text-[10px] text-parchment-400 dark:text-parchment-500 hover:border-iron hover:text-iron"
-                          >
-                            + plan
-                          </a>
-                        )
-                      )}
-                      {!m && isFri && hangDay && !isPast && (
-                        <a
-                          href="/plan"
-                          className="mt-1 block rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700 px-1 py-1 text-center text-[9px] sm:text-[10px] text-parchment-400 dark:text-parchment-500 hover:border-iron hover:text-iron"
-                        >
-                          + hang
-                        </a>
-                      )}
+                      ) : null}
                     </div>
                   );
                 })}
@@ -180,9 +162,6 @@ export default function CalendarPage() {
         </span>
         <span className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-sm border border-iron" /> Planned gathering
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700" /> Open slot
         </span>
         <span className="mono-cap">Mondays + Wednesdays · biweekly Fridays</span>
       </div>
