@@ -2,17 +2,11 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CalendarPlus } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
-import {
-  fmtDate,
-  nextWeekday,
-  startOfWeek,
-  toDateKey,
-  verseForWeek,
-} from "@/lib/utils";
+import { fmtDate, fmtDateShort, verseForWeek } from "@/lib/utils";
 import { MEETING_LABELS, MEETING_SHORT } from "@/lib/types";
 import { useIdeas, useMeetings, useMessages } from "@/lib/firestore";
 
@@ -21,14 +15,18 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardPage() {
-  const { profile, isAdmin } = useAuth();
+  const { profile, isAdmin, viewMode } = useAuth();
   const { items: meetings } = useMeetings();
   const { items: ideas } = useIdeas();
-  const { items: messages } = useMessages();
+  const { items: messages } = useMessages("members");
 
-  const weekStart = useMemo(() => startOfWeek(), []);
-  const monday = useMemo(() => toDateKey(nextWeekday(weekStart, 1)), [weekStart]);
-  const wednesday = useMemo(() => toDateKey(nextWeekday(weekStart, 3)), [weekStart]);
+  // Only show days that have been planned. Sort chronologically.
+  const planned = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return [...meetings]
+      .filter((m) => m.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [meetings]);
 
   const topIdeas = useMemo(() => {
     return [...ideas]
@@ -41,88 +39,107 @@ export default function DashboardPage() {
   }, [messages]);
 
   const verse = verseForWeek();
+  const effectiveAdmin = isAdmin && viewMode === "leader";
 
   return (
     <Shell>
       <div className="mb-2 flex items-baseline justify-between gap-4">
         <div>
           <SectionLabel>Welcome back</SectionLabel>
-          <h1 className="display mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Good to see you, <span className="serif-italic text-iron">{profile?.displayName?.split(" ")[0]}</span>.
+          <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">
+            Good to see you,{" "}
+            <span className="serif-italic text-iron">{profile?.displayName?.split(" ")[0]}</span>.
           </h1>
         </div>
         {isAdmin && (
           <span className="mono-cap hidden sm:inline-block rounded border border-iron/40 bg-ember/10 px-2 py-1 text-iron">
-            Leader
+            {viewMode === "leader" ? "Leader" : "Member view"}
           </span>
         )}
       </div>
 
-      <p className="mt-3 max-w-2xl text-forge-300">
-        The forge is hot. Here's what the brothers are sharpening this week.
+      <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
+        {planned.length > 0
+          ? "Here's what's planned and what's stirring."
+          : "Nothing on the calendar yet. The leaders will set the first gathering soon."}
       </p>
 
       <div className="my-8">
         <CoalBed />
       </div>
 
-      {/* THIS WEEK */}
+      {/* PLANNED DAYS */}
       <section className="mb-12">
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <SectionLabel>This week</SectionLabel>
-            <h2 className="display mt-2 text-2xl">Three gatherings ahead</h2>
+            <SectionLabel>Upcoming</SectionLabel>
+            <h2 className="display mt-2 text-2xl">
+              {planned.length === 0
+                ? "No gatherings planned"
+                : planned.length === 1
+                  ? "Next gathering"
+                  : `${planned.length} gatherings ahead`}
+            </h2>
           </div>
           <Link
             href="/plan"
-            className="group inline-flex items-center gap-1 text-sm text-forge-300 hover:text-iron"
+            className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
           >
             Open the week
             <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[
-            { kind: "monday" as const, date: monday },
-            { kind: "wednesday" as const, date: wednesday },
-            { kind: "friday" as const, date: toDateKey(new Date(weekStart.getTime() + 4 * 86400000)) },
-          ].map((m) => {
-            const filled = meetings.find((x) => x.date === m.date);
-            return (
+        {planned.length === 0 ? (
+          <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-8 text-center">
+            <CalendarPlus size={28} className="mx-auto text-parchment-400 dark:text-parchment-500" />
+            <p className="serif-italic mt-3 text-parchment-500 dark:text-parchment-400">
+              {effectiveAdmin
+                ? "Pick a Monday, Wednesday, or Friday and add a topic."
+                : "The leaders haven't set a gathering yet. Check back soon."}
+            </p>
+            {effectiveAdmin && (
+              <Link href="/plan" className="mt-4 inline-block text-sm text-iron hover:underline">
+                Plan a gathering →
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {planned.map((m) => (
               <div
-                key={m.kind}
-                className="group relative overflow-hidden rounded border border-forge-800 bg-forge-900/70 p-5 transition-colors hover:border-iron"
+                key={m.id}
+                className="group relative overflow-hidden rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5 transition-colors hover:border-iron"
               >
-                <div className="mono-cap text-forge-400">{MEETING_SHORT[m.kind]}</div>
+                <div className="flex items-baseline justify-between">
+                  <div className="mono-cap text-iron">{MEETING_SHORT[m.kind]}</div>
+                  <span className="text-xs text-parchment-500 dark:text-parchment-400">{fmtDateShort(m.date)}</span>
+                </div>
                 <div className="display mt-1 text-xl">{MEETING_LABELS[m.kind]}</div>
-                <div className="mt-1 text-sm text-forge-300">{fmtDate(m.date)}</div>
+                <div className="mt-1 text-sm text-parchment-700 dark:text-parchment-300">{fmtDate(m.date)}</div>
                 <div className="my-4 coal-bed-thin" />
-                <p className="text-sm text-parchment">
-                  {filled ? (
-                    <>
-                      <span className="block font-medium">{filled.title}</span>
-                      {filled.reading && (
-                        <span className="mt-1 block text-xs text-forge-400">
-                          Reading · {filled.reading}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <span className="serif-italic text-forge-400">No plan yet.</span>
-                  )}
-                </p>
+                <h3 className="display text-lg leading-snug">{m.title}</h3>
+                {m.reading && (
+                  <p className="mono-cap mt-2 text-parchment-500 dark:text-parchment-400">
+                    Reading · {m.reading}
+                  </p>
+                )}
+                {m.notes && (
+                  <p className="mt-3 whitespace-pre-line text-sm text-parchment-700 dark:text-parchment-300 line-clamp-4">
+                    {m.notes}
+                  </p>
+                )}
                 <Link
                   href="/plan"
                   className="mt-4 inline-flex items-center gap-1 text-xs text-iron opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  {isAdmin ? "Plan it" : "View plan"}
+                  {effectiveAdmin ? "Edit plan" : "Full plan"}
                   <ArrowUpRight size={12} />
                 </Link>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* IDEAS + CHAT summary */}
@@ -135,7 +152,7 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/ideas"
-              className="group inline-flex items-center gap-1 text-sm text-forge-300 hover:text-iron"
+              className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
             >
               All ideas
               <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -143,8 +160,8 @@ export default function DashboardPage() {
           </div>
 
           {topIdeas.length === 0 ? (
-            <div className="rounded border border-dashed border-forge-700 p-6 text-center">
-              <p className="serif-italic text-forge-400">
+            <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
+              <p className="serif-italic text-parchment-500 dark:text-parchment-400">
                 No ideas yet. The first spark starts with you.
               </p>
               <Link href="/ideas" className="mt-3 inline-block text-sm text-iron hover:underline">
@@ -156,9 +173,9 @@ export default function DashboardPage() {
               {topIdeas.map((idea, i) => (
                 <li
                   key={idea.id}
-                  className="group flex items-start gap-4 rounded border border-forge-800 bg-forge-900/40 p-4 hover:border-iron"
+                  className="group flex items-start gap-4 rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4 hover:border-iron"
                 >
-                  <span className="display text-3xl font-semibold text-forge-700">
+                  <span className="display text-3xl font-semibold text-parchment-400 dark:text-parchment-600">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="flex-1">
@@ -168,7 +185,7 @@ export default function DashboardPage() {
                         {Object.keys(idea.votes).length} vote{Object.keys(idea.votes).length === 1 ? "" : "s"}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-forge-300 line-clamp-2">{idea.body}</p>
+                    <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{idea.body}</p>
                   </div>
                 </li>
               ))}
@@ -184,30 +201,30 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/chat"
-              className="group inline-flex items-center gap-1 text-sm text-forge-300 hover:text-iron"
+              className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
             >
               Open chat
               <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </div>
 
-          <div className="rounded border border-forge-800 bg-forge-900/40 p-4">
+          <div className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4">
             {lastMessages.length === 0 ? (
-              <p className="serif-italic text-forge-400 text-center py-6">
+              <p className="serif-italic text-parchment-500 dark:text-parchment-400 text-center py-6">
                 Quiet in here. Be the first to speak up.
               </p>
             ) : (
               <ul className="space-y-4">
                 {lastMessages.map((m) => (
                   <li key={m.id} className="flex items-start gap-3">
-                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-forge-700 text-xs">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-parchment-200 dark:bg-parchment-700 text-xs">
                       {m.authorName[0]?.toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-sm text-parchment">{m.authorName}</span>
+                        <span className="text-sm text-parchment-900 dark:text-parchment-100">{m.authorName}</span>
                       </div>
-                      <p className="text-sm text-forge-300 line-clamp-2">{m.body}</p>
+                      <p className="text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{m.body}</p>
                     </div>
                   </li>
                 ))}
@@ -224,7 +241,7 @@ export default function DashboardPage() {
       {/* VERSE */}
       <section className="text-center">
         <p className="mono-cap text-iron">{verse.ref}</p>
-        <blockquote className="display mx-auto mt-3 max-w-2xl text-2xl serif-italic text-parchment sm:text-3xl">
+        <blockquote className="display mx-auto mt-3 max-w-2xl text-2xl serif-italic text-parchment-900 dark:text-parchment-100 sm:text-3xl">
           "{verse.text}"
         </blockquote>
       </section>

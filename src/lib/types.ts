@@ -34,11 +34,14 @@ export interface Idea {
   votes: Record<string, 1>;
 }
 
+export type ChatRoom = "leaders" | "members";
+
 export interface Message {
   id: string;
   uid: string;
   authorName: string;
   authorPhoto: string | null;
+  authorRole: UserRole;
   body: string;
   createdAt: number;
 }

@@ -13,9 +13,10 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
-import type { Idea, Meeting, Message, RsvpStatus } from "./types";
+import type { ChatRoom, Idea, Meeting, Message, RsvpStatus, UserRole } from "./types";
 
 function ts(createdAt: unknown): number {
   if (createdAt && typeof createdAt === "object" && "toMillis" in (createdAt as Record<string, unknown>)) {
@@ -142,7 +143,7 @@ export async function toggleVote(ideaId: string, uid: string, voted: boolean) {
   }
 }
 
-export function useMessages() {
+export function useMessages(room: ChatRoom) {
   const [items, setItems] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -151,7 +152,12 @@ export function useMessages() {
       setLoading(false);
       return;
     }
-    const q = query(collection(db, "messages"), orderBy("createdAt", "asc"), limit(200));
+    const q = query(
+      collection(db, "messages"),
+      where("room", "==", room),
+      orderBy("createdAt", "asc"),
+      limit(200)
+    );
     const unsub = onSnapshot(q, (snap) => {
       setItems(
         snap.docs.map((d) => {
@@ -161,6 +167,7 @@ export function useMessages() {
             uid: data.uid as string,
             authorName: data.authorName as string,
             authorPhoto: (data.authorPhoto as string | null) ?? null,
+            authorRole: (data.authorRole as Message["authorRole"]) ?? "member",
             body: data.body as string,
             createdAt: ts(data.createdAt),
           };
@@ -169,7 +176,7 @@ export function useMessages() {
       setLoading(false);
     });
     return unsub;
-  }, []);
+  }, [room]);
 
   return { items, loading };
 }
@@ -178,7 +185,9 @@ export async function sendMessage(input: {
   uid: string;
   authorName: string;
   authorPhoto: string | null;
+  authorRole: UserRole;
   body: string;
+  room: ChatRoom;
 }) {
   if (!db) throw new Error("Firebase not configured");
   await addDoc(collection(db, "messages"), {

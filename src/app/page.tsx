@@ -15,7 +15,7 @@ export default function HomePage() {
 
   return (
     <div className="grid min-h-screen place-items-center">
-      <div className="display text-forge-300 serif-italic">kindling...</div>
+      <div className="display text-parchment-900 dark:text-parchment-100-900 dark:text-parchment-900 dark:text-parchment-100-100-700 dark:text-parchment-900 dark:text-parchment-100-900 dark:text-parchment-900 dark:text-parchment-100-100-300 serif-italic">kindling...</div>
     </div>
   );
 }

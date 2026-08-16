@@ -51,7 +51,7 @@ export default function IdeasPage() {
       <h1 className="display mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
         What's the Lord teaching you?
       </h1>
-      <p className="mt-3 max-w-2xl text-forge-300">
+      <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
         Drop a topic, a question, a verse the brothers should wrestle with. The most-voted ideas rise to the top of next week's plan.
       </p>
 
@@ -62,18 +62,18 @@ export default function IdeasPage() {
       {/* ADD */}
       <form
         onSubmit={submit}
-        className="grid gap-3 rounded border border-forge-800 bg-forge-900/60 p-5 sm:grid-cols-3"
+        className="grid gap-3 rounded border border-parchment-200 dark:border-parchment-700 bg-white/80 dark:bg-parchment-900/60 p-5 sm:grid-cols-3"
       >
         <div className="sm:col-span-3 flex items-baseline justify-between">
           <h2 className="display text-xl">Pitch an idea</h2>
-          <span className="mono-cap text-forge-500">{visible.length} on the board</span>
+          <span className="mono-cap text-parchment-400 dark:text-parchment-500">{visible.length} on the board</span>
         </div>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Topic (e.g. Idolatry of comfort)"
-          className="sm:col-span-3 rounded-sm border border-forge-700 bg-forge-950 px-3 py-2 text-parchment placeholder:text-forge-500"
+          className="sm:col-span-3 rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:text-parchment-500"
           required
         />
         <textarea
@@ -81,13 +81,13 @@ export default function IdeasPage() {
           onChange={(e) => setBody(e.target.value)}
           placeholder="Why does this matter? What's the passage? What questions should we bring?"
           rows={3}
-          className="sm:col-span-3 rounded-sm border border-forge-700 bg-forge-950 px-3 py-2 text-parchment placeholder:text-forge-500"
+          className="sm:col-span-3 rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:text-parchment-500"
         />
         <div className="sm:col-span-3 flex justify-end">
           <button
             type="submit"
             disabled={!title.trim() || submitting}
-            className="inline-flex items-center gap-2 rounded bg-iron px-4 py-2 text-sm font-medium text-forge-950 hover:bg-iron-glow disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded bg-iron px-4 py-2 text-sm font-medium text-ink hover:bg-iron-glow disabled:opacity-40"
           >
             <Send size={14} /> {submitting ? "Sending..." : "Send to the board"}
           </button>
@@ -100,8 +100,8 @@ export default function IdeasPage() {
           className={classNames(
             "rounded-sm px-3 py-1.5 text-sm transition-colors",
             filter === "all"
-              ? "bg-forge-800 text-parchment"
-              : "text-forge-400 hover:text-parchment"
+              ? "bg-parchment-100 dark:bg-parchment-800 text-parchment-900 dark:text-parchment-100"
+              : "text-parchment-500 dark:text-parchment-400 hover:text-parchment-900 dark:text-parchment-100"
           )}
         >
           All ideas
@@ -111,8 +111,8 @@ export default function IdeasPage() {
           className={classNames(
             "rounded-sm px-3 py-1.5 text-sm transition-colors",
             filter === "mine"
-              ? "bg-forge-800 text-parchment"
-              : "text-forge-400 hover:text-parchment"
+              ? "bg-parchment-100 dark:bg-parchment-800 text-parchment-900 dark:text-parchment-100"
+              : "text-parchment-500 dark:text-parchment-400 hover:text-parchment-900 dark:text-parchment-100"
           )}
         >
           My ideas
@@ -121,11 +121,11 @@ export default function IdeasPage() {
 
       {/* LIST */}
       {loading && (
-        <p className="text-center text-forge-400 py-12 serif-italic">Stoking the coals...</p>
+        <p className="text-center text-parchment-500 dark:text-parchment-400 py-12 serif-italic">Stoking the coals...</p>
       )}
       {!loading && visible.length === 0 && (
-        <div className="rounded border border-dashed border-forge-700 p-10 text-center">
-          <p className="serif-italic text-forge-300 text-lg">
+        <div className="rounded border border-dashed border-parchment-200 dark:border-parchment-700 p-10 text-center">
+          <p className="serif-italic text-parchment-700 dark:text-parchment-300 text-lg">
             No ideas here yet. Be the first to throw something on the fire.
           </p>
         </div>
@@ -137,7 +137,7 @@ export default function IdeasPage() {
           return (
             <li
               key={idea.id}
-              className="group flex items-start gap-4 rounded border border-forge-800 bg-forge-900/40 p-4 hover:border-iron"
+              className="group flex items-start gap-4 rounded border border-parchment-200 dark:border-parchment-700 bg-white/70 dark:bg-parchment-900/40 p-4 hover:border-iron"
             >
               <button
                 onClick={() =>
@@ -149,7 +149,7 @@ export default function IdeasPage() {
                   "grid h-12 w-12 shrink-0 place-items-center rounded-sm border transition-all",
                   voted
                     ? "border-ember bg-ember/15 text-ember"
-                    : "border-forge-700 text-forge-400 hover:border-iron hover:text-iron"
+                    : "border-parchment-200 dark:border-parchment-700 text-parchment-500 dark:text-parchment-400 hover:border-iron hover:text-iron"
                 )}
               >
                 <div className="text-center leading-none">
@@ -160,14 +160,14 @@ export default function IdeasPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline justify-between gap-3">
                   <h3 className="display text-lg">{idea.title}</h3>
-                  <span className="mono-cap text-forge-500 shrink-0">
+                  <span className="mono-cap text-parchment-400 dark:text-parchment-500 shrink-0">
                     {timeAgo(idea.createdAt)}
                   </span>
                 </div>
                 {idea.body && (
-                  <p className="mt-1 whitespace-pre-line text-sm text-forge-300">{idea.body}</p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-parchment-700 dark:text-parchment-300">{idea.body}</p>
                 )}
-                <p className="mt-2 text-xs text-forge-500">
+                <p className="mt-2 text-xs text-parchment-400 dark:text-parchment-500">
                   pitched by <span className="text-iron">{idea.createdByName}</span>
                 </p>
               </div>

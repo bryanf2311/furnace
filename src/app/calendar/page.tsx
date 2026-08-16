@@ -48,7 +48,7 @@ export default function CalendarPage() {
       <h1 className="display mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
         Six weeks ahead
       </h1>
-      <p className="mt-3 max-w-2xl text-forge-300">
+      <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
         Mondays and Wednesdays are our weekly study. Every other Friday we hang. Tap a meeting to see its plan.
       </p>
 
@@ -56,10 +56,10 @@ export default function CalendarPage() {
         <CoalBed />
       </div>
 
-      <div className="overflow-x-auto rounded border border-forge-800 bg-forge-900/40">
-        <div className="grid min-w-[640px] grid-cols-7 border-b border-forge-800">
+      <div className="overflow-x-auto rounded border border-parchment-200 dark:border-parchment-700 bg-white/70 dark:bg-parchment-900/40">
+        <div className="grid min-w-[640px] grid-cols-7 border-b border-parchment-200 dark:border-parchment-700">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-            <div key={d} className="mono-cap p-2 text-center text-forge-500 border-r last:border-r-0 border-forge-800">
+            <div key={d} className="mono-cap p-2 text-center text-parchment-400 dark:text-parchment-500 border-r last:border-r-0 border-parchment-200 dark:border-parchment-700">
               {d}
             </div>
           ))}
@@ -76,7 +76,7 @@ export default function CalendarPage() {
               <div
                 key={c.key}
                 className={[
-                  "min-h-[110px] border-r border-b border-forge-800 p-2 transition-colors",
+                  "min-h-[110px] border-r border-b border-parchment-200 dark:border-parchment-700 p-2 transition-colors",
                   isPast ? "opacity-60" : "",
                   "last-in-row:border-r-0",
                 ].join(" ")}
@@ -85,7 +85,7 @@ export default function CalendarPage() {
                 }}
               >
                 <div className="flex items-baseline justify-between">
-                  <span className={isToday ? "display text-lg text-iron" : "text-sm text-forge-300"}>
+                  <span className={isToday ? "display text-lg text-iron" : "text-sm text-parchment-700 dark:text-parchment-300"}>
                     {dayNum}
                   </span>
                   {m && (
@@ -94,17 +94,17 @@ export default function CalendarPage() {
                     </span>
                   )}
                   {!m && isFri && hangDay && (
-                    <span className="mono-cap text-forge-500">FRI</span>
+                    <span className="mono-cap text-parchment-400 dark:text-parchment-500">FRI</span>
                   )}
                 </div>
                 {m ? (
                   <a
                     href="/plan"
-                    className="mt-1.5 block rounded-sm border border-forge-700 bg-forge-800/60 px-2 py-1.5 text-xs hover:border-iron"
+                    className="mt-1.5 block rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-100/60 dark:bg-parchment-800/60 px-2 py-1.5 text-xs hover:border-iron"
                   >
-                    <span className="block display text-parchment truncate">{m.title}</span>
+                    <span className="block display text-parchment-900 dark:text-parchment-100 truncate">{m.title}</span>
                     {m.reading && (
-                      <span className="mono-cap mt-0.5 block text-[10px] text-forge-400 truncate">
+                      <span className="mono-cap mt-0.5 block text-[10px] text-parchment-500 dark:text-parchment-400 truncate">
                         {m.reading}
                       </span>
                     )}
@@ -114,7 +114,7 @@ export default function CalendarPage() {
                   !isPast && (
                     <a
                       href="/plan"
-                      className="mt-1.5 block rounded-sm border border-dashed border-forge-700 px-2 py-1.5 text-center text-[10px] text-forge-500 hover:border-iron hover:text-iron"
+                      className="mt-1.5 block rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700 px-2 py-1.5 text-center text-[10px] text-parchment-400 dark:text-parchment-500 hover:border-iron hover:text-iron"
                     >
                       + plan
                     </a>
@@ -123,7 +123,7 @@ export default function CalendarPage() {
                 {!m && isFri && hangDay && !isPast && (
                   <a
                     href="/plan"
-                    className="mt-1.5 block rounded-sm border border-dashed border-forge-700 px-2 py-1.5 text-center text-[10px] text-forge-500 hover:border-iron hover:text-iron"
+                    className="mt-1.5 block rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700 px-2 py-1.5 text-center text-[10px] text-parchment-400 dark:text-parchment-500 hover:border-iron hover:text-iron"
                   >
                     + hang
                   </a>
@@ -134,7 +134,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-forge-400">
+      <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-parchment-500 dark:text-parchment-400">
         <span className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-sm bg-ember" /> Today
         </span>
@@ -142,7 +142,7 @@ export default function CalendarPage() {
           <span className="h-2 w-2 rounded-sm border border-iron" /> Planned gathering
         </span>
         <span className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-sm border border-dashed border-forge-700" /> Open slot
+          <span className="h-2 w-2 rounded-sm border border-dashed border-parchment-200 dark:border-parchment-700" /> Open slot
         </span>
         <span className="mono-cap">Mondays + Wednesdays · biweekly Fridays</span>
       </div>

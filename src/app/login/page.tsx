@@ -42,7 +42,7 @@ export default function LoginPage() {
           <span className="serif-italic text-iron">sharpens iron.</span>
         </h1>
 
-        <p className="mx-auto mt-5 max-w-sm text-center text-forge-300">
+        <p className="mx-auto mt-5 max-w-sm text-center text-parchment-700 dark:text-parchment-300">
           The sync room for our small group. Plan the week, pitch topics, gather on Mondays and Wednesdays, and hang on the off-Fridays.
         </p>
 
@@ -51,22 +51,22 @@ export default function LoginPage() {
         </div>
 
         {!configured ? (
-          <div className="rounded border border-forge-700 bg-forge-900 p-5 text-sm text-forge-300">
+          <div className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900 p-5 text-sm text-parchment-700 dark:text-parchment-300">
             Firebase isn't configured yet. Add your credentials to{" "}
-            <span className="mono-cap bg-forge-800 px-1.5 py-0.5 text-iron">.env.local</span>{" "}
+            <span className="mono-cap bg-parchment-100 dark:bg-parchment-800 px-1.5 py-0.5 text-iron">.env.local</span>{" "}
             and restart the dev server.
           </div>
         ) : (
           <button
             onClick={onSignIn}
             disabled={pending}
-            className="group flex w-full items-center justify-between rounded border border-forge-700 bg-forge-900 px-5 py-4 text-left transition-all hover:border-iron hover:bg-forge-800 disabled:opacity-60"
+            className="group flex w-full items-center justify-between rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900 px-5 py-4 text-left transition-all hover:border-iron hover:bg-parchment-100 dark:bg-parchment-800 disabled:opacity-60"
           >
             <span>
-              <span className="block text-parchment">
+              <span className="block text-parchment-900 dark:text-parchment-100">
                 {pending ? "Opening Google..." : "Sign in with Google"}
               </span>
-              <span className="mt-0.5 block text-sm text-forge-400">
+              <span className="mt-0.5 block text-sm text-parchment-500 dark:text-parchment-400">
                 Same Google account your leaders use
               </span>
             </span>
@@ -79,7 +79,7 @@ export default function LoginPage() {
         )}
 
         <div className="mt-12 text-center">
-          <p className="mono-cap text-forge-500">
+          <p className="mono-cap text-parchment-400 dark:text-parchment-500">
             Proverbs 27:17 · Men of the Forge
           </p>
         </div>

@@ -1,21 +1,27 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-forge-950: #0E0E10;
-  --color-forge-900: #141417;
-  --color-forge-800: #1B1B1F;
-  --color-forge-700: #25252B;
-  --color-forge-600: #34343B;
-  --color-forge-500: #5A5A63;
-  --color-forge-400: #8C8C96;
-  --color-forge-300: #B8B8C0;
-  --color-forge-200: #DCDCE0;
-  --color-parchment: #E8E2D5;
-  --color-parchment-dim: #B8B0A0;
-  --color-ember: #D9542B;
-  --color-ember-bright: #F26B3D;
-  --color-iron: #F2A65A;
-  --color-iron-glow: #FFCB7A;
+  /* Light palette — parchment + iron */
+  --color-parchment-50: #FAF7F1;
+  --color-parchment-100: #F4EFE5;
+  --color-parchment-200: #E8E0D0;
+  --color-parchment-300: #D2C8B4;
+  --color-parchment-400: #A89F8B;
+  --color-parchment-500: #7A715F;
+  --color-parchment-600: #5A5240;
+  --color-parchment-700: #3D372B;
+  --color-parchment-800: #26221A;
+  --color-parchment-900: #16140F;
+  --color-parchment-950: #0B0A07;
+
+  --color-ember: #C8401E;
+  --color-ember-bright: #E55A2A;
+  --color-iron: #C97A2C;
+  --color-iron-glow: #E89A4A;
+  --color-ink: #1B1A18;
+  --color-ink-soft: #2C2A26;
 
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-inter);
@@ -35,38 +41,60 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slide-in {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes overlay-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 html, body {
-  background: #0E0E10;
-  color: #E8E2D5;
+  background: var(--color-parchment-50);
+  color: var(--color-parchment-900);
   font-family: var(--font-inter), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+html.dark, html.dark body {
+  background: var(--color-parchment-900);
+  color: var(--color-parchment-100);
+}
+
+/* Subtle warmth in the background — works in both modes */
 body {
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217, 84, 43, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(242, 166, 90, 0.05), transparent);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200, 64, 30, 0.04), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(201, 122, 44, 0.03), transparent);
   background-attachment: fixed;
 }
 
-/* the signature element: the coal-bed divider */
+html.dark body {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200, 64, 30, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(201, 122, 44, 0.05), transparent);
+}
+
+/* Signature element: ember coal-bed */
 .coal-bed {
   height: 2px;
   width: 100%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(217, 84, 43, 0.2) 10%,
-    rgba(242, 107, 61, 0.95) 35%,
-    rgba(255, 203, 122, 1) 50%,
-    rgba(242, 107, 61, 0.95) 65%,
-    rgba(217, 84, 43, 0.2) 90%,
+    rgba(200, 64, 30, 0.25) 10%,
+    rgba(229, 90, 42, 0.95) 35%,
+    rgba(232, 154, 74, 1) 50%,
+    rgba(229, 90, 42, 0.95) 65%,
+    rgba(200, 64, 30, 0.25) 90%,
     transparent 100%
   );
   box-shadow:
-    0 0 18px rgba(242, 107, 61, 0.35),
-    0 0 36px rgba(217, 84, 43, 0.18);
+    0 0 14px rgba(229, 90, 42, 0.25),
+    0 0 28px rgba(200, 64, 30, 0.12);
   animation: pulse-ember 5s ease-in-out infinite;
 }
 
@@ -75,7 +103,16 @@ body {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(242, 166, 90, 0.4) 50%,
+    rgba(201, 122, 44, 0.35) 50%,
+    transparent
+  );
+}
+
+html.dark .coal-bed-thin {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 122, 44, 0.5) 50%,
     transparent
   );
 }
@@ -88,9 +125,14 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+
+html.dark .grain::after {
   opacity: 0.04;
   mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
 }
 
 .display {
@@ -117,24 +159,43 @@ input, textarea, select {
 }
 
 input::placeholder, textarea::placeholder {
-  color: #5A5A63;
+  color: var(--color-parchment-400);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--color-parchment-500);
 }
 
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #F2A65A;
+  outline: 2px solid var(--color-iron);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
 ::selection {
-  background: rgba(217, 84, 43, 0.4);
-  color: #E8E2D5;
+  background: rgba(200, 64, 30, 0.25);
+  color: var(--color-parchment-900);
+}
+
+html.dark ::selection {
+  background: rgba(229, 90, 42, 0.4);
+  color: var(--color-parchment-100);
+}
+
+/* Mobile drawer */
+.drawer-enter {
+  animation: slide-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.overlay-enter {
+  animation: overlay-in 220ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .coal-bed { animation: none; }
+  .drawer-enter, .overlay-enter { animation: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

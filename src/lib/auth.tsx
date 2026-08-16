@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -24,6 +25,8 @@ import {
 import { auth, db, google, isConfigured } from "./firebase";
 import type { AppUser, UserRole } from "./types";
 
+type ViewMode = "leader" | "member";
+
 interface AuthContextValue {
   user: User | null;
   profile: AppUser | null;
@@ -31,6 +34,8 @@ interface AuthContextValue {
   loading: boolean;
   configured: boolean;
   initError: string | null;
+  viewMode: ViewMode;
+  setViewMode: (m: ViewMode) => void;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   setRole: (uid: string, role: UserRole) => Promise<void>;
@@ -53,17 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [viewMode, setViewModeState] = useState<ViewMode>("leader");
 
   useEffect(() => {
     if (!isConfigured || !auth || !db) {
       setLoading(false);
       return;
     }
-    // Safety net: if onAuthStateChanged doesn't fire within 6s, surface the
-    // problem instead of hanging the UI on "kindling..." forever.
     const watchdog = setTimeout(() => {
       setLoading((stillLoading) => {
-        if (stillLoading) setInitError("Auth listener never initialized. Check your network and Firebase config.");
+        if (stillLoading) setInitError("Sign-in never finished. Check your network and any ad-blockers, then retry.");
         return false;
       });
     }, 6000);
@@ -112,6 +116,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // View mode is persisted per-user in localStorage. Leaders default to leader;
+  // they can flip to "member" to preview what brothers see.
+  useEffect(() => {
+    if (!user) return;
+    const stored = typeof window !== "undefined" ? window.localStorage.getItem(`furnace:viewMode:${user.uid}`) : null;
+    if (stored === "member" || stored === "leader") setViewModeState(stored);
+  }, [user]);
+
+  const setViewMode = useCallback(
+    (m: ViewMode) => {
+      setViewModeState(m);
+      if (user && typeof window !== "undefined") {
+        window.localStorage.setItem(`furnace:viewMode:${user.uid}`, m);
+      }
+    },
+    [user]
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -120,6 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       configured: isConfigured,
       initError,
+      viewMode,
+      setViewMode,
       signIn: async () => {
         if (!auth || !google) throw new Error("Firebase not configured");
         await signInWithPopup(auth, google);
@@ -133,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await updateDoc(doc(db, "users", uid), { role });
       },
     }),
-    [user, profile, loading]
+    [user, profile, loading, initError, viewMode, setViewMode]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

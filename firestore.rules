@@ -47,7 +47,6 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid;
       allow update: if isSignedIn()
         && (
-          // voting: only the votes.<uid> key may change
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
             && request.resource.data.votes.diff(resource.data.votes).affectedKeys()
                  .hasOnly([request.auth.uid]))
@@ -56,11 +55,25 @@ service cloud.firestore {
       allow delete: if isAdmin() || resource.data.createdBy == request.auth.uid;
     }
 
-    // Chat: any signed-in user can read; any signed-in user can write their own messages.
+    // Chat rooms. Two collections effectively: one document per message, with a `room` field
+    // either "leaders" (admin-only) or "members" (everyone).
     match /messages/{id} {
-      allow read: if isSignedIn();
+      // Read: anyone signed in can read members; only admins can read leaders.
+      allow read: if isSignedIn() && (resource.data.room == 'members' || isAdmin());
+
+      // List: same rule.
+      allow list: if isSignedIn()
+        && (request.query.limit <= 200)
+        && (isAdmin() || request.query.filters.size() == 0
+            || (request.query.filters[0][0] == 'room' && request.query.filters[0][2] == 'members'));
+
+      // Create: any signed-in user can post. The room must be "members", or "leaders" if admin.
       allow create: if isSignedIn()
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.room in ['leaders', 'members']
+        && (request.resource.data.room == 'members' || isAdmin());
+
+      // Update / delete: author or admin.
       allow update, delete: if isAdmin() || resource.data.uid == request.auth.uid;
     }
   }

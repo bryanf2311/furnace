@@ -102,10 +102,10 @@ export default function PlanPage() {
           </h1>
         </div>
         {!isAdmin && (
-          <span className="mono-cap text-forge-400">Read-only</span>
+          <span className="mono-cap text-parchment-500 dark:text-parchment-400">Read-only</span>
         )}
       </div>
-      <p className="mt-3 text-forge-300">
+      <p className="mt-3 text-parchment-700 dark:text-parchment-300">
         {isAdmin
           ? "Set the topics, readings, and notes for each gathering this week."
           : "Here's what the leaders have planned. RSVP so they know who's coming."}
@@ -122,22 +122,22 @@ export default function PlanPage() {
           return (
             <article
               key={`${s.kind}-${s.date}`}
-              className="relative overflow-hidden rounded border border-forge-800 bg-forge-900/60"
+              className="relative overflow-hidden rounded border border-parchment-200 dark:border-parchment-700 bg-white/80 dark:bg-parchment-900/60"
             >
-              <div className="flex items-baseline justify-between border-b border-forge-800 bg-forge-900 px-5 py-3">
+              <div className="flex items-baseline justify-between border-b border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900 px-5 py-3">
                 <div>
                   <div className="mono-cap text-iron">{MEETING_SHORT[s.kind]}</div>
                   <h2 className="display mt-0.5 text-lg">{MEETING_LABELS[s.kind]}</h2>
                 </div>
-                <span className="text-xs text-forge-400">{fmtDate(s.date)}</span>
+                <span className="text-xs text-parchment-500 dark:text-parchment-400">{fmtDate(s.date)}</span>
               </div>
 
               {!isEditing && (
                 <div className="p-5">
-                  {loading && <p className="text-sm text-forge-400">Loading...</p>}
+                  {loading && <p className="text-sm text-parchment-500 dark:text-parchment-400">Loading...</p>}
                   {!loading && !m && (
                     <div className="py-6 text-center">
-                      <p className="serif-italic text-forge-400">No plan yet.</p>
+                      <p className="serif-italic text-parchment-500 dark:text-parchment-400">No plan yet.</p>
                       {isAdmin && (
                         <button
                           onClick={() => startNew(s.kind, s.date)}
@@ -157,7 +157,7 @@ export default function PlanPage() {
                         </p>
                       )}
                       {m.notes && (
-                        <p className="mt-3 whitespace-pre-line text-forge-300">{m.notes}</p>
+                        <p className="mt-3 whitespace-pre-line text-parchment-700 dark:text-parchment-300">{m.notes}</p>
                       )}
 
                       <div className="my-4 coal-bed-thin" />
@@ -168,7 +168,7 @@ export default function PlanPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => startEdit(m)}
-                              className="text-xs text-forge-300 hover:text-iron"
+                              className="text-xs text-parchment-700 dark:text-parchment-300 hover:text-iron"
                             >
                               Edit
                             </button>
@@ -204,7 +204,7 @@ export default function PlanPage() {
                   <div className="flex items-center justify-between gap-2 pt-2">
                     <button
                       onClick={close}
-                      className="inline-flex items-center gap-1 rounded border border-forge-700 px-3 py-1.5 text-sm text-forge-300 hover:border-iron hover:text-parchment"
+                      className="inline-flex items-center gap-1 rounded border border-parchment-200 dark:border-parchment-700 px-3 py-1.5 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron hover:text-parchment-900 dark:text-parchment-100"
                     >
                       <X size={14} /> Cancel
                     </button>
@@ -220,7 +220,7 @@ export default function PlanPage() {
                       <button
                         onClick={save}
                         disabled={!draft.title.trim()}
-                        className="inline-flex items-center gap-1 rounded bg-iron px-3 py-1.5 text-sm font-medium text-forge-950 hover:bg-iron-glow disabled:opacity-40"
+                        className="inline-flex items-center gap-1 rounded bg-iron px-3 py-1.5 text-sm font-medium text-ink hover:bg-iron-glow disabled:opacity-40"
                       >
                         <Save size={14} /> Save
                       </button>
@@ -249,13 +249,13 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mono-cap text-forge-400">{label}</span>
+      <span className="mono-cap text-parchment-500 dark:text-parchment-400">{label}</span>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded-sm border border-forge-700 bg-forge-950 px-3 py-2 text-parchment placeholder:text-forge-500"
+        className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:text-parchment-500"
       />
     </label>
   );
@@ -276,13 +276,13 @@ function TextArea({
 }) {
   return (
     <label className="block">
-      <span className="mono-cap text-forge-400">{label}</span>
+      <span className="mono-cap text-parchment-500 dark:text-parchment-400">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="mt-1 block w-full rounded-sm border border-forge-700 bg-forge-950 px-3 py-2 text-parchment placeholder:text-forge-500"
+        className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:text-parchment-500"
       />
     </label>
   );
@@ -298,7 +298,7 @@ function RsvpRow({ meeting }: { meeting: Meeting }) {
   const opts: Array<{ v: RsvpStatus; label: string; color: string }> = [
     { v: "yes", label: "In", color: "ember" },
     { v: "maybe", label: "Maybe", color: "iron" },
-    { v: "no", label: "Out", color: "forge-500" },
+    { v: "no", label: "Out", color: "muted" },
   ];
 
   return (
@@ -313,8 +313,8 @@ function RsvpRow({ meeting }: { meeting: Meeting }) {
                 ? "border-ember/60 bg-ember/15 text-ember"
                 : o.color === "iron"
                   ? "border-iron/60 bg-iron/15 text-iron"
-                  : "border-forge-500 bg-forge-700/40 text-forge-200"
-              : "border-forge-700 text-forge-400 hover:text-parchment hover:border-forge-500"
+                  : "border-parchment-400 bg-parchment-200 dark:bg-parchment-700/40 text-parchment-900 dark:text-parchment-100"
+              : "border-parchment-200 dark:border-parchment-700 text-parchment-500 dark:text-parchment-400 hover:text-parchment-900 dark:hover:text-parchment-100 hover:border-parchment-400"
           }`}
         >
           {o.label} <span className="opacity-60">({tally[o.v]})</span>
