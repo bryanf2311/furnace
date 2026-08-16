@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Furnace
 
-## Getting Started
+A small-group sync app for the brothers. Plan the week, pitch ideas, vote on what to study, RSVP, and chat — all in one place. Built for the men of the forge.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js 16** (App Router, Turbopack)
+- **Tailwind CSS v4**
+- **Firebase** — Google Authentication + Firestore (real-time)
+- **Netlify** for hosting
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Google sign-in** for every brother in the group
+- **Leader (admin) role** — promote/demote from the Leaders page
+- **This-week plan** with Monday + Wednesday Bible studies and biweekly Friday hangouts; admins add topics, readings, and notes
+- **RSVP** — In / Maybe / Out, with live tallies
+- **Idea board** — anyone pitches, anyone votes, top ideas float up
+- **Calendar** — six-week grid view with planned meetings marked
+- **Chat** — group message stream
+- **Rotating Scripture** of the week in the footer
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+1. **Create a Firebase project** at https://console.firebase.google.com
+2. **Enable Google sign-in** under Authentication → Sign-in method
+3. **Create a Firestore database** (start in production mode, then paste the rules from `firestore.rules`)
+4. **Copy `.env.example` to `.env.local`** and fill in the values from Project Settings → General → Your apps
+5. **Add your Google email** to `NEXT_PUBLIC_ADMIN_EMAILS` (comma-separated). That email will be promoted to Leader on first sign-in.
+6. Run `npm install && npm run dev` and open http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy to Netlify
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Push this repo to GitHub
+2. Connect the repo in Netlify (Build command `npm run build`, publish `.next`)
+3. In Netlify → Site settings → Environment variables, add the same `NEXT_PUBLIC_FIREBASE_*` values from your `.env.local`
+4. Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Promote other leaders
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sign in with your leader account, then visit `/admin` (or click "Leaders" in the nav). Promote any member with one click.

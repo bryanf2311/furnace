@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && role() == 'admin';
+    }
+
+    // Users: anyone signed in can read the directory; only admins (or self on create) can write.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSelf(uid);
+      allow update: if isAdmin() || (isSelf(uid) && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // Meetings: anyone signed in can read; only admins can write.
+    match /meetings/{id} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+
+      // RSVPs: any signed-in user can write only their own RSVP field.
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['rsvps'])
+        && request.resource.data.rsvps.diff(resource.data.rsvps).affectedKeys()
+             .hasOnly([request.auth.uid]);
+    }
+
+    // Ideas: anyone signed in can read and create; only creator or admin can delete; any signed-in user can vote (toggle one field).
+    match /ideas/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isSignedIn()
+        && (
+          // voting: only the votes.<uid> key may change
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+            && request.resource.data.votes.diff(resource.data.votes).affectedKeys()
+                 .hasOnly([request.auth.uid]))
+          || isAdmin()
+        );
+      allow delete: if isAdmin() || resource.data.createdBy == request.auth.uid;
+    }
+
+    // Chat: any signed-in user can read; any signed-in user can write their own messages.
+    match /messages/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin() || resource.data.uid == request.auth.uid;
+    }
+  }
+}

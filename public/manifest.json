@@ -1,0 +1,10 @@
+{
+  "name": "Furnace",
+  "short_name": "Furnace",
+  "description": "Small group sync — where iron sharpens iron.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E0E10",
+  "theme_color": "#0E0E10",
+  "icons": []
+}
