@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, CalendarPlus, MapPin } from "lucide-react";
+import { ArrowUpRight, CalendarPlus, MapPin } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
-import { fmtDate, fmtDateShort, timeAgo, verseForWeek } from "@/lib/utils";
+import { fmtDate, fmtDateShort, verseForWeek } from "@/lib/utils";
 import { MEETING_LABELS, MEETING_SHORT } from "@/lib/types";
-import { useIdeas, useMeetings, useMessages, useReadings } from "@/lib/firestore";
+import { useIdeas, useMeetings, useMessages, useCurrentReads } from "@/lib/firestore";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="mono-cap text-iron">{children}</div>;
@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const { profile, isAdmin, viewMode } = useAuth();
   const { items: meetings } = useMeetings();
   const { items: ideas } = useIdeas();
-  const { items: readings } = useReadings();
+  const { items: reads } = useCurrentReads();
   const { items: messages } = useMessages("members");
 
   const effectiveAdmin = isAdmin && viewMode === "leader";
@@ -39,9 +39,15 @@ export default function DashboardPage() {
       .slice(0, 3);
   }, [ideas]);
 
-  const currentReading = useMemo(() => {
-    return readings.find((r) => r.status === "current");
-  }, [readings]);
+  const myRead = useMemo(() => {
+    if (!profile) return null;
+    return reads.find((r) => r.uid === profile.uid) ?? null;
+  }, [reads, profile]);
+
+  const othersReading = useMemo(() => {
+    if (!profile) return reads.slice(0, 3);
+    return reads.filter((r) => r.uid !== profile.uid).slice(0, 3);
+  }, [reads, profile]);
 
   const lastMessages = useMemo(() => {
     return [...messages].slice(-3).reverse();
@@ -225,8 +231,8 @@ export default function DashboardPage() {
         <section>
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <SectionLabel>Reading together</SectionLabel>
-              <h2 className="display mt-2 text-2xl">Now</h2>
+              <SectionLabel>What we're reading</SectionLabel>
+              <h2 className="display mt-2 text-2xl">Tonight</h2>
             </div>
             <Link
               href="/readings"
@@ -237,33 +243,49 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {currentReading ? (
-            <div className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5">
-              <div className="grid h-12 w-12 place-items-center rounded-sm bg-iron/15 text-iron">
-                <BookOpen size={22} />
+          {myRead ? (
+            <div className="rounded border border-iron/40 bg-iron/5 p-5">
+              <div className="flex items-baseline justify-between">
+                <span className="mono-cap text-iron">You're reading</span>
               </div>
-              <h3 className="display mt-3 text-xl leading-snug">{currentReading.title}</h3>
-              {currentReading.author && (
-                <p className="mt-1 text-sm text-parchment-500 dark:text-parchment-400">{currentReading.author}</p>
+              <h3 className="display mt-2 text-xl leading-snug">{myRead.title}</h3>
+              {myRead.author && (
+                <p className="mt-1 text-sm text-parchment-500 dark:text-parchment-400">{myRead.author}</p>
               )}
-              {currentReading.note && (
-                <p className="mt-3 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-3">{currentReading.note}</p>
+              {myRead.note && (
+                <p className="mt-3 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-3">{myRead.note}</p>
               )}
-              <p className="mono-cap mt-3 text-parchment-500 dark:text-parchment-400">
-                Added {timeAgo(currentReading.createdAt)} by {currentReading.createdByName}
-              </p>
+              <Link href="/readings" className="mt-3 inline-block text-xs text-iron hover:underline">
+                Update →
+              </Link>
             </div>
-          ) : (
+          ) : reads.length === 0 ? (
             <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
               <p className="serif-italic text-parchment-500 dark:text-parchment-400">
-                No book on the nightstand yet.
+                Nobody's shared yet. Be the first.
               </p>
-              {effectiveAdmin && (
-                <Link href="/readings" className="mt-3 inline-block text-sm text-iron hover:underline">
-                  Add one →
-                </Link>
-              )}
+              <Link href="/readings" className="mt-3 inline-block text-sm text-iron hover:underline">
+                Share what I'm reading →
+              </Link>
             </div>
+          ) : (
+            <ul className="space-y-3">
+              {othersReading.map((r) => (
+                <li
+                  key={r.uid}
+                  className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4"
+                >
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-sm text-parchment-900 dark:text-parchment-100">{r.displayName}</span>
+                    <span className="mono-cap text-[10px] text-parchment-500 dark:text-parchment-400">is reading</span>
+                  </div>
+                  <h3 className="display mt-1 text-lg leading-snug">{r.title}</h3>
+                  {r.author && (
+                    <p className="mt-0.5 text-sm text-parchment-500 dark:text-parchment-400">{r.author}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 

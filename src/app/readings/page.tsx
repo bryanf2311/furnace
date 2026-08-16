@@ -1,107 +1,74 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpen, Plus, Save, Trash2, X, CheckCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { BookOpen, Pencil, Sparkles, X } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
 import {
-  addReading,
-  deleteReading,
-  updateReading,
-  useReadings,
+  clearCurrentRead,
+  setCurrentRead,
+  useCurrentReads,
+  useRecommendations,
 } from "@/lib/firestore";
 import { timeAgo, classNames } from "@/lib/utils";
-import {
-  READING_KIND_LABEL,
-  READING_STATUS_LABEL,
-  type Reading,
-  type ReadingKind,
-  type ReadingStatus,
-} from "@/lib/types";
-
-const KIND_OPTIONS: ReadingKind[] = ["book", "passage", "article", "devotional"];
-
-const STATUS_ORDER: ReadingStatus[] = ["current", "upcoming", "finished"];
 
 export default function ReadingsPage() {
   const { profile, isAdmin, viewMode } = useAuth();
-  const { items, loading } = useReadings();
+  const { items: reads, loading } = useCurrentReads();
+  const { items: recs } = useRecommendations();
   const effectiveAdmin = isAdmin && viewMode === "leader";
 
-  const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState<Omit<Reading, "id" | "createdAt"> | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const mine = useMemo(() => {
+    if (!profile) return null;
+    return reads.find((r) => r.uid === profile.uid) ?? null;
+  }, [reads, profile]);
 
-  function startNew() {
-    if (!profile) return;
-    setDraft({
-      title: "",
-      author: "",
-      kind: "book",
-      note: "",
-      status: "upcoming",
-      createdBy: profile.uid,
-      createdByName: profile.displayName,
-    });
-    setAdding(true);
-  }
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  function startEdit(r: Reading) {
-    setEditingId(r.id);
-    setDraft({
-      title: r.title,
-      author: r.author ?? "",
-      kind: r.kind,
-      note: r.note ?? "",
-      status: r.status,
-      createdBy: r.createdBy,
-      createdByName: r.createdByName,
-    });
-  }
-
-  function close() {
-    setAdding(false);
-    setEditingId(null);
-    setDraft(null);
-  }
-
-  async function save() {
-    if (!draft) return;
-    if (editingId) {
-      await updateReading(editingId, {
-        title: draft.title.trim(),
-        author: draft.author?.trim() || "",
-        kind: draft.kind,
-        note: draft.note?.trim() || "",
-        status: draft.status,
-      });
+  function startEdit() {
+    if (mine) {
+      setTitle(mine.title);
+      setAuthor(mine.author ?? "");
+      setNote(mine.note ?? "");
     } else {
-      await addReading({
-        ...draft,
-        title: draft.title.trim(),
-        author: draft.author?.trim() || undefined,
-        note: draft.note?.trim() || undefined,
-      });
+      setTitle("");
+      setAuthor("");
+      setNote("");
     }
-    close();
+    setEditing(true);
   }
 
-  async function setStatus(id: string, status: ReadingStatus) {
-    await updateReading(id, { status });
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profile || !title.trim() || saving) return;
+    setSaving(true);
+    try {
+      await setCurrentRead({
+        uid: profile.uid,
+        displayName: profile.displayName,
+        photoURL: profile.photoURL,
+        title: title.trim(),
+        author: author.trim(),
+        note: note.trim(),
+      });
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  async function remove(id: string) {
-    if (!confirm("Remove this from the list?")) return;
-    await deleteReading(id);
+  async function clear() {
+    if (!profile) return;
+    if (!confirm("Remove your current read?")) return;
+    await clearCurrentRead(profile.uid);
+    setEditing(false);
   }
-
-  const grouped: Record<ReadingStatus, Reading[]> = {
-    current: [],
-    upcoming: [],
-    finished: [],
-  };
-  items.forEach((r) => grouped[r.status].push(r));
 
   return (
     <Shell>
@@ -112,198 +79,246 @@ export default function ReadingsPage() {
             What we're reading
           </h1>
         </div>
-        {effectiveAdmin && !adding && !editingId && (
+        {profile && !editing && (
           <button
-            onClick={startNew}
+            onClick={startEdit}
             className="inline-flex items-center gap-1.5 rounded bg-iron px-3 py-2 text-sm font-medium text-ink hover:bg-iron-glow"
           >
-            <Plus size={14} /> Add
+            {mine ? (
+              <>
+                <Pencil size={14} /> Update mine
+              </>
+            ) : (
+              <>
+                <BookOpen size={14} /> Share what I'm reading
+              </>
+            )}
           </button>
         )}
       </div>
       <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
-        {effectiveAdmin
-          ? "Books, passages, and devotionals you're walking through as a group. Set the current one and the rest will queue."
-          : "Books and passages the leaders have on the nightstand. Read along at your own pace."}
+        A roll call of books the brothers are in. Share what you're reading now, see what the rest of the room is digging into, and pick up the recommendations below.
       </p>
 
       <div className="my-8">
         <CoalBed />
       </div>
 
-      {/* ADD / EDIT FORM */}
-      {effectiveAdmin && draft && (adding || editingId) && (
-        <div className="mb-8 rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="display text-xl">{editingId ? "Edit reading" : "New reading"}</h2>
-            {editingId && (
+      {/* EDIT FORM */}
+      {editing && profile && (
+        <form
+          onSubmit={save}
+          className="mb-8 grid gap-3 rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5 sm:grid-cols-3"
+        >
+          <h2 className="display text-xl sm:col-span-3">
+            {mine ? "Update what you're reading" : "What are you reading?"}
+          </h2>
+          <label className="block sm:col-span-2">
+            <span className="mono-cap text-parchment-500 dark:text-parchment-400">Title</span>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Knowing God"
+              className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
+              autoFocus
+            />
+          </label>
+          <label className="block">
+            <span className="mono-cap text-parchment-500 dark:text-parchment-400">Author</span>
+            <input
+              type="text"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="J.I. Packer"
+              className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
+            />
+          </label>
+          <label className="block sm:col-span-3">
+            <span className="mono-cap text-parchment-500 dark:text-parchment-400">Note (optional)</span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Where you are, what you're getting out of it, or who you'd recommend it to."
+              rows={2}
+              className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
+            />
+          </label>
+          <div className="sm:col-span-3 flex items-center justify-between">
+            {mine ? (
               <button
-                onClick={() => remove(editingId)}
-                className="inline-flex items-center gap-1 text-xs text-ember hover:underline"
+                type="button"
+                onClick={clear}
+                className="text-xs text-parchment-500 dark:text-parchment-400 hover:text-ember"
               >
-                <Trash2 size={12} /> Delete
+                Remove from feed
               </button>
-            )}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="block sm:col-span-3">
-              <span className="mono-cap text-parchment-500 dark:text-parchment-400">Title</span>
-              <input
-                type="text"
-                value={draft.title}
-                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                placeholder="e.g. Knowing God"
-                className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
-              />
-            </label>
-            <label className="block sm:col-span-2">
-              <span className="mono-cap text-parchment-500 dark:text-parchment-400">Author</span>
-              <input
-                type="text"
-                value={draft.author ?? ""}
-                onChange={(e) => setDraft({ ...draft, author: e.target.value })}
-                placeholder="J.I. Packer"
-                className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
-              />
-            </label>
-            <label className="block">
-              <span className="mono-cap text-parchment-500 dark:text-parchment-400">Kind</span>
-              <select
-                value={draft.kind}
-                onChange={(e) => setDraft({ ...draft, kind: e.target.value as ReadingKind })}
-                className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100"
+            ) : <span />}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="inline-flex items-center gap-1 rounded border border-parchment-200 dark:border-parchment-700 px-3 py-1.5 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
               >
-                {KIND_OPTIONS.map((k) => (
-                  <option key={k} value={k}>{READING_KIND_LABEL[k]}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block sm:col-span-3">
-              <span className="mono-cap text-parchment-500 dark:text-parchment-400">Why this one</span>
-              <textarea
-                value={draft.note ?? ""}
-                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                placeholder="A sentence on what the brothers should get out of it."
-                rows={3}
-                className="mt-1 block w-full rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
-              />
-            </label>
+                <X size={14} /> Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!title.trim() || saving}
+                className="rounded bg-iron px-3 py-1.5 text-sm font-medium text-ink hover:bg-iron-glow disabled:opacity-40"
+              >
+                {saving ? "Saving..." : "Share"}
+              </button>
+            </div>
           </div>
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              onClick={close}
-              className="inline-flex items-center gap-1 rounded border border-parchment-200 dark:border-parchment-700 px-3 py-1.5 text-sm text-parchment-700 dark:text-parchment-300 hover:border-iron"
-            >
-              <X size={14} /> Cancel
-            </button>
-            <button
-              onClick={save}
-              disabled={!draft.title.trim()}
-              className="inline-flex items-center gap-1 rounded bg-iron px-3 py-1.5 text-sm font-medium text-ink hover:bg-iron-glow disabled:opacity-40"
-            >
-              <Save size={14} /> Save
-            </button>
-          </div>
-        </div>
+        </form>
       )}
 
+      {/* FEED */}
       {loading && (
         <p className="text-center text-parchment-500 dark:text-parchment-400 py-12 serif-italic">Loading...</p>
       )}
 
-      {!loading && items.length === 0 && !adding && (
+      {!loading && reads.length === 0 && (
         <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-10 text-center">
           <BookOpen size={28} className="mx-auto text-parchment-400 dark:text-parchment-500" />
           <p className="serif-italic mt-3 text-parchment-500 dark:text-parchment-400">
-            {effectiveAdmin
-              ? "Nothing on the nightstand yet. Add the first reading."
-              : "No readings picked yet. Check back soon."}
+            Nobody's shared yet. Be the first to put something on the table.
           </p>
-          {effectiveAdmin && (
+          {profile && !editing && (
             <button
-              onClick={startNew}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm text-iron hover:underline"
+              onClick={startEdit}
+              className="mt-4 inline-block text-sm text-iron hover:underline"
             >
-              <Plus size={14} /> Add a reading
+              Share what I'm reading →
             </button>
           )}
         </div>
       )}
 
-      {!loading && items.length > 0 && (
+      {!loading && reads.length > 0 && (
         <>
-          {STATUS_ORDER.map((status) => {
-            const list = grouped[status];
-            if (list.length === 0) return null;
-            return (
-              <section key={status} className="mb-10">
-                <div className="mb-4 flex items-baseline justify-between">
-                  <h2 className="display text-2xl">{READING_STATUS_LABEL[status]}</h2>
-                  <span className="mono-cap text-parchment-500 dark:text-parchment-400">
-                    {list.length} {list.length === 1 ? "reading" : "readings"}
-                  </span>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {reads.map((r) => (
+              <li
+                key={r.uid}
+                className={classNames(
+                  "rounded border p-5",
+                  r.uid === profile?.uid
+                    ? "border-iron/40 bg-iron/5"
+                    : "border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  {r.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={r.photoURL}
+                      alt=""
+                      className="h-10 w-10 rounded-full border border-parchment-200 dark:border-parchment-700"
+                    />
+                  ) : (
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-parchment-200 dark:bg-parchment-700 text-sm">
+                      {r.displayName[0]?.toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="truncate text-sm text-parchment-900 dark:text-parchment-100">
+                        {r.displayName}
+                      </span>
+                      {r.uid === profile?.uid && (
+                        <span className="mono-cap text-[10px] text-iron">you</span>
+                      )}
+                    </div>
+                    <span className="mono-cap text-[10px] text-parchment-500 dark:text-parchment-400">
+                      updated {timeAgo(r.updatedAt)}
+                    </span>
+                  </div>
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-parchment-200 dark:bg-parchment-800 text-iron">
+                    <BookOpen size={18} />
+                  </div>
                 </div>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {list.map((r) => (
-                    <li
-                      key={r.id}
-                      className={classNames(
-                        "rounded border p-5 transition-colors",
-                        status === "current"
-                          ? "border-iron/40 bg-iron/5"
-                          : status === "finished"
-                            ? "border-parchment-200 dark:border-parchment-700 bg-parchment-100 dark:bg-parchment-900/40 opacity-70"
-                            : "border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-sm bg-parchment-200 dark:bg-parchment-800 text-parchment-700 dark:text-parchment-200">
-                          {status === "finished" ? <CheckCircle2 size={18} /> : <BookOpen size={18} />}
-                        </div>
-                        {effectiveAdmin && (
-                          <div className="flex flex-wrap gap-1">
-                            {STATUS_ORDER.filter((s) => s !== r.status).map((s) => (
-                              <button
-                                key={s}
-                                onClick={() => setStatus(r.id, s)}
-                                className="mono-cap rounded-sm border border-parchment-200 dark:border-parchment-700 px-2 py-0.5 text-[10px] text-parchment-500 dark:text-parchment-400 hover:border-iron hover:text-iron"
-                              >
-                                {READING_STATUS_LABEL[s]}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <h3 className="display mt-3 text-xl leading-snug">{r.title}</h3>
-                      <div className="mt-1 flex items-baseline gap-2 text-sm text-parchment-500 dark:text-parchment-400">
-                        <span>{READING_KIND_LABEL[r.kind]}</span>
-                        {r.author && <span>· {r.author}</span>}
-                      </div>
-                      {r.note && (
-                        <p className="mt-3 text-sm text-parchment-700 dark:text-parchment-300">{r.note}</p>
-                      )}
-                      <p className="mono-cap mt-3 text-[10px] text-parchment-500 dark:text-parchment-400">
-                        Added {timeAgo(r.createdAt)} by {r.createdByName}
-                      </p>
-                      {effectiveAdmin && (
-                        <div className="mt-3 flex justify-end">
-                          <button
-                            onClick={() => startEdit(r)}
-                            className="text-xs text-parchment-500 dark:text-parchment-400 hover:text-iron"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-                {status !== "finished" && <div className="mt-8"><CoalBedThin /></div>}
-              </section>
-            );
-          })}
+                <h3 className="display mt-3 text-xl leading-snug">{r.title}</h3>
+                {r.author && (
+                  <p className="mt-1 text-sm text-parchment-500 dark:text-parchment-400">{r.author}</p>
+                )}
+                {r.note && (
+                  <p className="mt-3 text-sm text-parchment-700 dark:text-parchment-300 whitespace-pre-line">
+                    {r.note}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="my-10">
+            <CoalBedThin />
+          </div>
+
+          {/* RECOMMENDATIONS */}
+          <section>
+            <div className="mb-5 flex items-baseline justify-between">
+              <div>
+                <p className="mono-cap text-iron">For the group</p>
+                <h2 className="display mt-2 text-2xl">Recommended</h2>
+              </div>
+              <Link
+                href="/recommendations"
+                className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
+              >
+                All
+                <Arrow className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+            </div>
+            {recs.length === 0 ? (
+              <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
+                <p className="serif-italic text-parchment-500 dark:text-parchment-400">
+                  {effectiveAdmin
+                    ? "No recommendations yet. Suggest a book the brothers should read."
+                    : "The leaders haven't recommended anything yet."}
+                </p>
+              </div>
+            ) : (
+              <ul className="grid gap-3 sm:grid-cols-3">
+                {recs.slice(0, 3).map((r) => (
+                  <li
+                    key={r.id}
+                    className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4"
+                  >
+                    <div className="grid h-9 w-9 place-items-center rounded-sm bg-iron/15 text-iron">
+                      <Sparkles size={16} />
+                    </div>
+                    <h3 className="display mt-2 text-lg leading-snug">{r.title}</h3>
+                    {r.author && (
+                      <p className="mt-0.5 text-sm text-parchment-500 dark:text-parchment-400">{r.author}</p>
+                    )}
+                    {r.note && (
+                      <p className="mt-2 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{r.note}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </>
       )}
     </Shell>
+  );
+}
+
+function Arrow({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      className={className}
+    >
+      <path d="M5 11L11 5M11 5H6M11 5V10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

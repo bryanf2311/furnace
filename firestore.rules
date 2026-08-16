@@ -77,13 +77,23 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || resource.data.uid == request.auth.uid;
     }
 
-    // Recommended readings (books, passages, articles, devotionals).
+    // "Currently reading" — one document per user, keyed by uid.
+    // Anyone signed in can read any of them; users can only write their own.
+    match /currentReads/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['displayName', 'photoURL', 'title', 'author', 'note', 'updatedAt']);
+      allow delete: if isSelf(uid) || isAdmin();
+    }
+
+    // Recommended readings — leaders curate a list for the group.
     // Anyone signed in can read; only admins can write.
-    match /readings/{id} {
+    match /recommendations/{id} {
       allow read: if isSignedIn();
       allow create: if isAdmin()
-        && request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isAdmin();
+        && request.resource.data.addedBy == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

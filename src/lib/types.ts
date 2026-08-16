@@ -35,20 +35,7 @@ export interface Idea {
   source: "leader" | "member";
 }
 
-export type ReadingStatus = "upcoming" | "current" | "finished";
 export type ReadingKind = "book" | "passage" | "article" | "devotional";
-
-export interface Reading {
-  id: string;
-  title: string;
-  author?: string;
-  kind: ReadingKind;
-  note?: string;
-  status: ReadingStatus;
-  createdBy: string;
-  createdByName: string;
-  createdAt: number;
-}
 
 export const READING_KIND_LABEL: Record<ReadingKind, string> = {
   book: "Book",
@@ -57,11 +44,28 @@ export const READING_KIND_LABEL: Record<ReadingKind, string> = {
   devotional: "Devotional",
 };
 
-export const READING_STATUS_LABEL: Record<ReadingStatus, string> = {
-  upcoming: "Up next",
-  current: "Reading now",
-  finished: "Finished",
-};
+// What each brother is currently reading. One per user.
+export interface CurrentRead {
+  uid: string;
+  displayName: string;
+  photoURL: string | null;
+  title: string;
+  author?: string;
+  note?: string;
+  updatedAt: number;
+}
+
+// Books the leaders recommend for the group.
+export interface Recommendation {
+  id: string;
+  title: string;
+  author?: string;
+  kind: ReadingKind;
+  note?: string;
+  addedBy: string;
+  addedByName: string;
+  createdAt: number;
+}
 
 export type ChatRoom = "leaders" | "members";
 

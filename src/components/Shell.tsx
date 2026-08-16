@@ -14,6 +14,7 @@ import {
   Send,
   Shield,
   Sparkles,
+  Star,
   Sun,
   Users,
   X,
@@ -28,7 +29,8 @@ const NAV = [
   { href: "/plan", label: "This week", icon: Compass },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/ideas", label: "Ideas", icon: Sparkles },
-  { href: "/readings", label: "Readings", icon: BookOpen },
+  { href: "/readings", label: "Reading", icon: BookOpen },
+  { href: "/recommendations", label: "Recommended", icon: Star },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/admin", label: "Leaders", icon: Users, adminOnly: true },
 ];
