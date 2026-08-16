@@ -130,10 +130,10 @@ NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
       {/* TOP BAR */}
       <header className="sticky top-0 z-40 border-b border-parchment-200 dark:border-parchment-700 bg-parchment-50/85 dark:bg-parchment-900/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-5">
-          {/* Hamburger (mobile) */}
+          {/* Hamburger */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="grid h-9 w-9 place-items-center rounded-sm border border-parchment-200 dark:border-parchment-700 text-parchment-700 dark:text-parchment-200 hover:border-iron lg:hidden"
+            className="grid h-9 w-9 place-items-center rounded-sm border border-parchment-200 dark:border-parchment-700 text-parchment-700 dark:text-parchment-200 hover:border-iron"
             aria-label="Open menu"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -145,30 +145,7 @@ NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
             <BrandMark size={20} />
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="ml-4 hidden flex-1 items-center gap-1 lg:flex">
-            {navItems.map((n) => {
-              const active = pathname === n.href || pathname?.startsWith(n.href + "/");
-              const Icon = n.icon;
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={classNames(
-                    "group flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm transition-colors",
-                    active
-                      ? "bg-parchment-200 dark:bg-parchment-800 text-parchment-900 dark:text-parchment-100"
-                      : "text-parchment-700 dark:text-parchment-300 hover:text-parchment-900 dark:hover:text-parchment-100 hover:bg-parchment-100 dark:hover:bg-parchment-800/60"
-                  )}
-                >
-                  <Icon size={15} className={active ? "text-iron" : "text-parchment-500 group-hover:text-iron"} />
-                  <span>{n.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="flex-1 lg:hidden" />
+          <div className="flex-1" />
 
           <div className="flex items-center gap-2 sm:gap-3">
             {isAdmin && (
@@ -227,11 +204,11 @@ NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
       {drawerOpen && (
         <>
           <div
-            className="overlay-enter fixed inset-0 z-50 bg-parchment-900/40 backdrop-blur-sm lg:hidden"
+            className="overlay-enter fixed inset-0 z-50 bg-parchment-900/40 backdrop-blur-sm"
             onClick={() => setDrawerOpen(false)}
             aria-hidden="true"
           />
-          <aside className="drawer-enter fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-parchment-50 dark:bg-parchment-900 shadow-2xl lg:hidden">
+          <aside className="drawer-enter fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-parchment-50 dark:bg-parchment-900 shadow-2xl">
             <div className="flex items-center justify-between border-b border-parchment-200 dark:border-parchment-700 px-5 py-4">
               <BrandMark size={20} />
               <button
