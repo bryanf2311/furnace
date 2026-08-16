@@ -35,6 +35,7 @@ A small-group sync app for the brothers. Plan the week, pitch ideas, vote on wha
 2. Connect the repo in Netlify (Build command `npm run build`, publish `.next`)
 3. In Netlify → Site settings → Environment variables, add the same `NEXT_PUBLIC_FIREBASE_*` values from your `.env.local`
 4. Deploy
+5. In Firebase Console → Authentication → Sign-in method → Authorized domains, add your Netlify hostname (e.g. `furnace-small-group.netlify.app`) so Google sign-in works on the deployed site
 
 ## Promote other leaders
 
