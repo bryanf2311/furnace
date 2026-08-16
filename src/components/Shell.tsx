@@ -26,7 +26,7 @@ const NAV = [
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { user, profile, isAdmin, loading, signOut, configured } = useAuth();
+  const { user, profile, isAdmin, loading, signOut, configured, initError } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -67,6 +67,31 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
 NEXT_PUBLIC_FIREBASE_APP_ID=...
 NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
           </pre>
+        </div>
+      </div>
+    );
+  }
+
+  if (initError && !user) {
+    return (
+      <div className="grid min-h-screen place-items-center px-6">
+        <div className="max-w-xl text-center">
+          <div className="mx-auto mb-6 flex justify-center">
+            <BrandMark size={28} />
+          </div>
+          <h1 className="display text-3xl mb-3">Sign-in failed.</h1>
+          <p className="text-forge-300 mb-4">{initError}</p>
+          <p className="text-sm text-forge-400">
+            Most likely: this site isn't on your Firebase project's authorized-domain list, or an ad-blocker is blocking Firebase.
+            Add <span className="mono-cap bg-forge-800 px-1.5 py-0.5 text-iron">{typeof window !== "undefined" ? window.location.hostname : "furnace-small-group.netlify.app"}</span> under
+            Firebase Console → Authentication → Sign-in method → Authorized domains.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded border border-iron px-4 py-2 text-iron hover:bg-iron/10"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

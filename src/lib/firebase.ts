@@ -21,6 +21,8 @@ let google: GoogleAuthProvider | null = null;
 if (isConfigured) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig as Record<string, string>) : getApps()[0];
   auth = getAuth(app);
+  // Firebase v12 defaults to fetch streams (HTTP/1.1 chunked) which avoid the
+  // long-poll Listen channel pattern that most ad-blockers flag.
   db = getFirestore(app);
   google = new GoogleAuthProvider();
 }

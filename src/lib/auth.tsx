@@ -30,6 +30,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   loading: boolean;
   configured: boolean;
+  initError: string | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   setRole: (uid: string, role: UserRole) => Promise<void>;
@@ -51,38 +52,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isConfigured || !auth || !db) {
       setLoading(false);
       return;
     }
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const ref = doc(db!, "users", u.uid);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
-          const seededRole: UserRole = isAdminEmail(u.email) ? "admin" : "member";
-          const newProfile: AppUser = {
-            uid: u.uid,
-            email: u.email ?? "",
-            displayName: u.displayName ?? u.email ?? "Member",
-            photoURL: u.photoURL ?? null,
-            role: seededRole,
-            createdAt: Date.now(),
-          };
-          await setDoc(ref, { ...newProfile, createdAt: serverTimestamp() });
-          setProfile(newProfile);
+    // Safety net: if onAuthStateChanged doesn't fire within 6s, surface the
+    // problem instead of hanging the UI on "kindling..." forever.
+    const watchdog = setTimeout(() => {
+      setLoading((stillLoading) => {
+        if (stillLoading) setInitError("Auth listener never initialized. Check your network and Firebase config.");
+        return false;
+      });
+    }, 6000);
+
+    const unsub = onAuthStateChanged(
+      auth,
+      async (u) => {
+        clearTimeout(watchdog);
+        setUser(u);
+        if (u) {
+          try {
+            const ref = doc(db!, "users", u.uid);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+              const seededRole: UserRole = isAdminEmail(u.email) ? "admin" : "member";
+              const newProfile: AppUser = {
+                uid: u.uid,
+                email: u.email ?? "",
+                displayName: u.displayName ?? u.email ?? "Member",
+                photoURL: u.photoURL ?? null,
+                role: seededRole,
+                createdAt: Date.now(),
+              };
+              await setDoc(ref, { ...newProfile, createdAt: serverTimestamp() });
+              setProfile(newProfile);
+            } else {
+              setProfile(snap.data() as AppUser);
+            }
+          } catch (err) {
+            setInitError(err instanceof Error ? err.message : "Failed to load profile.");
+          }
         } else {
-          setProfile(snap.data() as AppUser);
+          setProfile(null);
         }
-      } else {
-        setProfile(null);
+        setLoading(false);
+      },
+      (err) => {
+        clearTimeout(watchdog);
+        setInitError(err.message);
+        setLoading(false);
       }
-      setLoading(false);
-    });
-    return unsub;
+    );
+    return () => {
+      clearTimeout(watchdog);
+      unsub();
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -92,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin: profile?.role === "admin",
       loading,
       configured: isConfigured,
+      initError,
       signIn: async () => {
         if (!auth || !google) throw new Error("Firebase not configured");
         await signInWithPopup(auth, google);
