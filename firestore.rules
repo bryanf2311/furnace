@@ -47,9 +47,11 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid;
       allow update: if isSignedIn()
         && (
+          // Voting: only the votes.<uid> key may change (set or deleted).
           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
-            && request.resource.data.votes.diff(resource.data.votes).affectedKeys()
-                 .hasOnly([request.auth.uid]))
+            && (request.resource.data.votes.diff(resource.data.votes).affectedKeys()
+                  .hasOnly([request.auth.uid])
+                || request.resource.data.votes.keys().hasAll([request.auth.uid])))
           || isAdmin()
         );
       allow delete: if isAdmin() || resource.data.createdBy == request.auth.uid;
@@ -93,6 +95,22 @@ service cloud.firestore {
       allow create: if isAdmin()
         && request.resource.data.addedBy == request.auth.uid;
       allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Polls — leaders create, anyone signed in votes (one option per user).
+    match /polls/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin()
+        || (
+          // Voting: only votes.<uid> key changes.
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+          && (request.resource.data.votes.diff(resource.data.votes).affectedKeys()
+                .hasOnly([request.auth.uid])
+              || request.resource.data.votes.keys().hasAll([request.auth.uid]))
+        );
       allow delete: if isAdmin();
     }
   }

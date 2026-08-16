@@ -180,53 +180,55 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* IDEAS + READING + CHAT (three columns on desktop) */}
+      {/* IDEAS (leaders only) + READING + CHAT (three columns on desktop) */}
       <div className="grid gap-8 lg:grid-cols-3">
-        <section>
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <SectionLabel>Vote on what's next</SectionLabel>
-              <h2 className="display mt-2 text-2xl">Ideas</h2>
-            </div>
-            <Link
-              href="/ideas"
-              className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
-            >
-              All
-              <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-          </div>
-
-          {topIdeas.length === 0 ? (
-            <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
-              <p className="serif-italic text-parchment-500 dark:text-parchment-400">
-                Nothing pitched yet.
-              </p>
-              <Link href="/ideas" className="mt-3 inline-block text-sm text-iron hover:underline">
-                Suggest something →
+        {effectiveAdmin && (
+          <section>
+            <div className="mb-5 flex items-end justify-between">
+              <div>
+                <SectionLabel>Vote on what's next</SectionLabel>
+                <h2 className="display mt-2 text-2xl">Ideas</h2>
+              </div>
+              <Link
+                href="/ideas"
+                className="group inline-flex items-center gap-1 text-sm text-parchment-700 dark:text-parchment-300 hover:text-iron"
+              >
+                All
+                <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
             </div>
-          ) : (
-            <ol className="space-y-3">
-              {topIdeas.map((idea) => (
-                <li
-                  key={idea.id}
-                  className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="display text-lg leading-snug">{idea.title}</h3>
-                    <span className="mono-cap shrink-0 text-iron">
-                      {Object.keys(idea.votes).length}
-                    </span>
-                  </div>
-                  {idea.body && (
-                    <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{idea.body}</p>
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
+
+            {topIdeas.length === 0 ? (
+              <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-6 text-center">
+                <p className="serif-italic text-parchment-500 dark:text-parchment-400">
+                  Nothing pitched yet.
+                </p>
+                <Link href="/ideas" className="mt-3 inline-block text-sm text-iron hover:underline">
+                  Pitch the first one →
+                </Link>
+              </div>
+            ) : (
+              <ol className="space-y-3">
+                {topIdeas.map((idea) => (
+                  <li
+                    key={idea.id}
+                    className="rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="display text-lg leading-snug">{idea.title}</h3>
+                      <span className="mono-cap shrink-0 text-iron">
+                        {Object.keys(idea.votes).length}
+                      </span>
+                    </div>
+                    {idea.body && (
+                      <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300 line-clamp-2">{idea.body}</p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        )}
 
         <section>
           <div className="mb-5 flex items-end justify-between">

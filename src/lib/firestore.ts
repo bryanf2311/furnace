@@ -5,6 +5,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   limit,
   onSnapshot,
@@ -16,7 +17,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
-import type { ChatRoom, CurrentRead, Idea, Meeting, Message, Recommendation, ReadingKind, RsvpStatus, UserRole } from "./types";
+import type { ChatRoom, CurrentRead, Idea, Meeting, Message, Poll, PollOption, Recommendation, ReadingKind, RsvpStatus, UserRole } from "./types";
 
 function ts(createdAt: unknown): number {
   if (createdAt && typeof createdAt === "object" && "toMillis" in (createdAt as Record<string, unknown>)) {
@@ -254,7 +255,9 @@ export async function toggleVote(ideaId: string, uid: string, voted: boolean) {
   if (voted) {
     await updateDoc(ref, { [`votes.${uid}`]: 1 });
   } else {
-    await updateDoc(ref, { [`votes.${uid}`]: null });
+    // Use deleteField() so Firestore actually removes the key — passing null
+    // through updateDoc with dot-notation nested paths is unreliable across SDK versions.
+    await updateDoc(ref, { [`votes.${uid}`]: deleteField() });
   }
 }
 
@@ -309,4 +312,71 @@ export async function sendMessage(input: {
     ...input,
     createdAt: serverTimestamp(),
   });
+}
+
+// === Polls ===
+export function usePolls() {
+  const [items, setItems] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isConfigured || !db) {
+      setLoading(false);
+      return;
+    }
+    const q = query(collection(db, "polls"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setItems(
+        snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            question: (data.question as string) ?? "",
+            options: (data.options as PollOption[]) ?? [],
+            votes: (data.votes as Record<string, string>) ?? {},
+            createdBy: (data.createdBy as string) ?? "",
+            createdByName: (data.createdByName as string) ?? "",
+            createdAt: ts(data.createdAt),
+            closed: (data.closed as boolean) ?? false,
+          };
+        })
+      );
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  return { items, loading };
+}
+
+export async function addPoll(input: Omit<Poll, "id" | "createdAt" | "votes" | "closed">) {
+  if (!db) throw new Error("Firebase not configured");
+  await addDoc(collection(db, "polls"), {
+    ...input,
+    votes: {},
+    closed: false,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export async function votePoll(pollId: string, uid: string, optionId: string) {
+  if (!db) return;
+  const ref = doc(db, "polls", pollId);
+  await updateDoc(ref, { [`votes.${uid}`]: optionId });
+}
+
+export async function clearVote(pollId: string, uid: string) {
+  if (!db) return;
+  const ref = doc(db, "polls", pollId);
+  await updateDoc(ref, { [`votes.${uid}`]: deleteField() });
+}
+
+export async function closePoll(pollId: string, closed: boolean) {
+  if (!db) return;
+  await updateDoc(doc(db, "polls", pollId), { closed });
+}
+
+export async function deletePoll(id: string) {
+  if (!db) return;
+  await deleteDoc(doc(db, "polls", id));
 }

@@ -67,6 +67,23 @@ export interface Recommendation {
   createdAt: number;
 }
 
+// Polls (leader-created, anyone votes).
+export interface PollOption {
+  id: string;
+  label: string;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: PollOption[];
+  votes: Record<string, string>; // uid -> optionId
+  createdBy: string;
+  createdByName: string;
+  createdAt: number;
+  closed: boolean;
+}
+
 export type ChatRoom = "leaders" | "members";
 
 export interface Message {

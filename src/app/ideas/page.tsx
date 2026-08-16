@@ -17,6 +17,20 @@ export default function IdeasPage() {
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  if (!effectiveAdmin) {
+    return (
+      <Shell>
+        <p className="mono-cap text-iron">Ideas</p>
+        <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">
+          Leaders only
+        </h1>
+        <p className="mt-3 text-parchment-700 dark:text-parchment-300">
+          This page is for the leaders to pitch topics and review what brothers have suggested. You're seeing the app as a member.
+        </p>
+      </Shell>
+    );
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!profile || !title.trim() || submitting) return;
@@ -27,7 +41,7 @@ export default function IdeasPage() {
         body: body.trim(),
         createdBy: profile.uid,
         createdByName: profile.displayName,
-        source: effectiveAdmin ? "leader" : "member",
+        source: "leader",
       });
       setTitle("");
       setBody("");
@@ -51,12 +65,10 @@ export default function IdeasPage() {
     <Shell>
       <p className="mono-cap text-iron">Ideas</p>
       <h1 className="display mt-2 text-3xl font-semibold tracking-tight sm:text-5xl">
-        {effectiveAdmin ? "What's the Lord teaching you?" : "Vote on what's next"}
+        What's the Lord teaching you?
       </h1>
       <p className="mt-3 max-w-2xl text-parchment-700 dark:text-parchment-300">
-        {effectiveAdmin
-          ? "Drop a topic, a question, a verse the brothers should wrestle with. The most-voted ideas float up."
-          : "Read what the leaders are pitching, then vote on what you'd like to study. You can also suggest your own idea below."}
+        Drop a topic, a question, a verse the brothers should wrestle with. The most-voted ideas float up. Brothers can also send suggestions to the right — review them when they roll in.
       </p>
 
       <div className="my-8">
@@ -69,9 +81,7 @@ export default function IdeasPage() {
         className="grid gap-3 rounded border border-parchment-200 dark:border-parchment-700 bg-white dark:bg-parchment-900/70 p-5 sm:grid-cols-3"
       >
         <div className="sm:col-span-3 flex items-baseline justify-between">
-          <h2 className="display text-xl">
-            {effectiveAdmin ? "Pitch an idea" : "Suggest a topic"}
-          </h2>
+          <h2 className="display text-xl">Pitch an idea</h2>
           <span className="mono-cap text-parchment-500 dark:text-parchment-400">
             {items.length} on the board
           </span>
@@ -80,11 +90,7 @@ export default function IdeasPage() {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={
-            effectiveAdmin
-              ? "Topic (e.g. Idolatry of comfort)"
-              : "Topic you'd like the brothers to study"
-          }
+          placeholder="Topic (e.g. Idolatry of comfort)"
           className="sm:col-span-3 rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-parchment-900 dark:text-parchment-100 placeholder:text-parchment-400 dark:placeholder:text-parchment-500"
           required
         />
@@ -101,7 +107,7 @@ export default function IdeasPage() {
             disabled={!title.trim() || submitting}
             className="inline-flex items-center gap-2 rounded bg-iron px-4 py-2 text-sm font-medium text-ink hover:bg-iron-glow disabled:opacity-40"
           >
-            <Send size={14} /> {submitting ? "Sending..." : effectiveAdmin ? "Post to the board" : "Send to leaders"}
+            <Send size={14} /> {submitting ? "Sending..." : "Post to the board"}
           </button>
         </div>
       </form>
@@ -110,7 +116,7 @@ export default function IdeasPage() {
       <section className="mt-10">
         <div className="mb-5 flex items-baseline justify-between">
           <div>
-            <SectionLabel>From the leaders</SectionLabel>
+            <SectionLabel>Your pitches</SectionLabel>
             <h2 className="display mt-2 text-2xl">On the board</h2>
           </div>
           <span className="mono-cap text-parchment-500 dark:text-parchment-400">
@@ -124,7 +130,7 @@ export default function IdeasPage() {
         {!loading && leaderIdeas.length === 0 && (
           <div className="rounded border border-dashed border-parchment-300 dark:border-parchment-700 p-10 text-center">
             <p className="serif-italic text-parchment-500 dark:text-parchment-400 text-lg">
-              No topics pitched yet.
+              No pitches yet.
             </p>
           </div>
         )}
@@ -201,6 +207,9 @@ function IdeaRow({ idea, profile }: { idea: ReturnType<typeof useIdeas>["items"]
         )}
         <p className="mt-2 text-xs text-parchment-500 dark:text-parchment-400">
           pitched by <span className="text-iron">{idea.createdByName}</span>
+          {idea.source === "member" && (
+            <span className="mono-cap ml-2 text-[10px] text-ember">from a brother</span>
+          )}
         </p>
       </div>
     </li>

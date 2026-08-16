@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BarChart3,
   BookOpen,
   CalendarDays,
   Compass,
@@ -11,10 +12,10 @@ import {
   LogOut,
   MessageSquare,
   Moon,
+  PlusCircle,
   Send,
   Shield,
   Sparkles,
-  Star,
   Sun,
   Users,
   X,
@@ -28,10 +29,12 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: Flame },
   { href: "/plan", label: "This week", icon: Compass },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/ideas", label: "Ideas", icon: Sparkles },
   { href: "/readings", label: "Reading", icon: BookOpen },
-  { href: "/recommendations", label: "Recommended", icon: Star },
   { href: "/chat", label: "Chat", icon: MessageSquare },
+  // Leader-only
+  { href: "/plan-next", label: "Plan next event", icon: PlusCircle, adminOnly: true },
+  { href: "/ideas", label: "Ideas", icon: Sparkles, adminOnly: true },
+  { href: "/polls", label: "Polls", icon: BarChart3, adminOnly: true },
   { href: "/admin", label: "Leaders", icon: Users, adminOnly: true },
 ];
 

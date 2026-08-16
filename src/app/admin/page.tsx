@@ -79,16 +79,16 @@ function LeadersInner() {
               <p className="mt-1 text-sm text-parchment-700 dark:text-parchment-300">
                 Send this link to the men in your group. They sign in with their Google account and they're in.
               </p>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   readOnly
                   value={inviteUrl}
-                  className="flex-1 rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-sm text-parchment-900 dark:text-parchment-100 font-mono"
+                  className="min-w-0 flex-1 rounded-sm border border-parchment-200 dark:border-parchment-700 bg-parchment-50 dark:bg-parchment-950 px-3 py-2 text-sm text-parchment-900 dark:text-parchment-100 font-mono"
                   onFocus={(e) => e.target.select()}
                 />
                 <button
                   onClick={copyInvite}
-                  className="inline-flex items-center gap-1.5 rounded-sm bg-iron px-3 py-2 text-sm font-medium text-ink hover:bg-iron-glow"
+                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-sm bg-iron px-3 py-2 text-sm font-medium text-ink hover:bg-iron-glow"
                 >
                   {copied ? <Check size={14} /> : <Copy size={14} />}
                   {copied ? "Copied" : "Copy link"}
