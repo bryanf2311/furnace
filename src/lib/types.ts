@@ -7,7 +7,27 @@ export interface AppUser {
   photoURL: string | null;
   role: UserRole;
   createdAt: number;
+  notifPrefs?: NotifPrefs;
+  lastSeenActivityAt?: number;
 }
+
+export type NotifCategory = "events" | "ideas" | "polls" | "messages" | "readings";
+
+export interface NotifPrefs {
+  events: boolean;
+  ideas: boolean;
+  polls: boolean;
+  messages: boolean;
+  readings: boolean;
+}
+
+export const DEFAULT_NOTIF_PREFS: NotifPrefs = {
+  events: true,
+  ideas: true,
+  polls: true,
+  messages: true,
+  readings: true,
+};
 
 export type MeetingKind = "monday" | "wednesday" | "friday";
 export type RsvpStatus = "yes" | "no" | "maybe";
@@ -85,6 +105,39 @@ export interface Poll {
 }
 
 export type ChatRoom = "leaders" | "members";
+
+// Activity feed entry — one doc per notable event in the app.
+export type ActivityKind =
+  | "event_created"
+  | "idea_posted"
+  | "poll_posted"
+  | "message_posted"
+  | "reading_shared"
+  | "recommendation_added";
+
+export type ActivityCategory = "events" | "ideas" | "polls" | "messages" | "readings";
+
+export const ACTIVITY_CATEGORY: Record<ActivityKind, ActivityCategory> = {
+  event_created: "events",
+  idea_posted: "ideas",
+  poll_posted: "polls",
+  message_posted: "messages",
+  reading_shared: "readings",
+  recommendation_added: "readings",
+};
+
+export interface Activity {
+  id: string;
+  kind: ActivityKind;
+  summary: string;
+  actorUid: string;
+  actorName: string;
+  actorPhoto: string | null;
+  refType: "idea" | "event" | "poll" | "message" | "reading";
+  refId: string;
+  extra?: Record<string, string>;
+  createdAt: number;
+}
 
 export interface Message {
   id: string;

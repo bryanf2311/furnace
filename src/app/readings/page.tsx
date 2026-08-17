@@ -9,6 +9,8 @@ import {
   addRecommendation,
   clearCurrentRead,
   deleteRecommendation,
+  recordReadingShared,
+  recordRecommendationAdded,
   setCurrentRead,
   useCurrentReads,
   useRecommendations,
@@ -62,6 +64,7 @@ export default function ReadingsPage() {
         author: author.trim(),
         note: note.trim(),
       });
+      await recordReadingShared(profile, profile.uid, title.trim(), author.trim());
       setEditing(false);
     } finally {
       setSaving(false);
@@ -88,7 +91,7 @@ export default function ReadingsPage() {
     if (!profile || !rTitle.trim() || rSaving) return;
     setRSaving(true);
     try {
-      await addRecommendation({
+      const ref = await addRecommendation({
         title: rTitle.trim(),
         author: rAuthor.trim(),
         kind: rKind,
@@ -96,6 +99,7 @@ export default function ReadingsPage() {
         addedBy: profile.uid,
         addedByName: profile.displayName,
       });
+      await recordRecommendationAdded(profile, ref.id, rTitle.trim());
       setRTitle("");
       setRAuthor("");
       setRKind("book");

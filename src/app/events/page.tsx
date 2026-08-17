@@ -7,7 +7,7 @@ import { ArrowLeft, Save, X } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
-import { upsertMeeting, useMeetings } from "@/lib/firestore";
+import { recordEventCreated, upsertMeeting, useMeetings } from "@/lib/firestore";
 import { fmtDate, fmtDateShort, nextFutureWeekday, toDateKey } from "@/lib/utils";
 import type { MeetingKind } from "@/lib/types";
 import { MEETING_SHORT } from "@/lib/types";
@@ -61,6 +61,7 @@ export default function EventsPage() {
         rsvps: {},
         createdBy: profile.uid,
       });
+      await recordEventCreated(profile, id, title.trim(), kind, date);
       router.push(`/events/${id}`);
     } finally {
       setSaving(false);

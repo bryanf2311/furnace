@@ -5,7 +5,7 @@ import { Send, Shield, Users } from "lucide-react";
 import { Shell } from "@/components/Shell";
 import { CoalBed, CoalBedThin } from "@/components/CoalBed";
 import { useAuth } from "@/lib/auth";
-import { sendMessage, useMessages } from "@/lib/firestore";
+import { recordMessagePosted, sendMessage, useMessages } from "@/lib/firestore";
 import { timeAgo, classNames } from "@/lib/utils";
 import type { ChatRoom } from "@/lib/types";
 
@@ -31,7 +31,7 @@ export default function ChatPage() {
     if (!profile || !text.trim() || sending) return;
     setSending(true);
     try {
-      await sendMessage({
+      const ref = await sendMessage({
         uid: profile.uid,
         authorName: profile.displayName,
         authorPhoto: profile.photoURL,
@@ -39,6 +39,7 @@ export default function ChatPage() {
         body: text.trim(),
         room,
       });
+      await recordMessagePosted(profile, room, ref.id, profile.displayName, text.trim());
       setText("");
     } finally {
       setSending(false);

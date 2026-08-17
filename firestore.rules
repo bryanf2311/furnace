@@ -113,5 +113,15 @@ service cloud.firestore {
         );
       allow delete: if isAdmin();
     }
+
+    // Activity feed — everyone signed in can read; only the actor themselves
+    // or an admin can write. (We use this for the notification bell; the
+    // client writes entries alongside the actual creates.)
+    match /activity/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if isAdmin() || resource.data.actorUid == request.auth.uid;
+    }
   }
 }

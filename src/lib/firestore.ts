@@ -17,7 +17,8 @@ import {
   where,
 } from "firebase/firestore";
 import { db, isConfigured } from "./firebase";
-import type { ChatRoom, CurrentRead, Idea, Meeting, Message, Poll, PollOption, Recommendation, ReadingKind, RsvpStatus, UserRole } from "./types";
+import type { Activity, ChatRoom, CurrentRead, Idea, Meeting, Message, NotifPrefs, Poll, PollOption, Recommendation, ReadingKind, RsvpStatus, UserRole } from "./types";
+import { DEFAULT_NOTIF_PREFS } from "./types";
 
 function ts(createdAt: unknown): number {
   if (createdAt && typeof createdAt === "object" && "toMillis" in (createdAt as Record<string, unknown>)) {
@@ -129,7 +130,7 @@ export async function addIdea(input: {
   source: Idea["source"];
 }) {
   if (!db) throw new Error("Firebase not configured");
-  await addDoc(collection(db, "ideas"), {
+  return await addDoc(collection(db, "ideas"), {
     ...input,
     createdAt: serverTimestamp(),
     votes: {},
@@ -235,7 +236,7 @@ export function useRecommendations() {
 
 export async function addRecommendation(input: Omit<Recommendation, "id" | "createdAt">) {
   if (!db) throw new Error("Firebase not configured");
-  await addDoc(collection(db, "recommendations"), {
+  return await addDoc(collection(db, "recommendations"), {
     ...input,
     title: input.title.trim(),
     author: input.author?.trim() ?? "",
@@ -313,7 +314,7 @@ export async function sendMessage(input: {
   room: ChatRoom;
 }) {
   if (!db) throw new Error("Firebase not configured");
-  await addDoc(collection(db, "messages"), {
+  return await addDoc(collection(db, "messages"), {
     ...input,
     createdAt: serverTimestamp(),
   });
@@ -356,7 +357,7 @@ export function usePolls() {
 
 export async function addPoll(input: Omit<Poll, "id" | "createdAt" | "votes" | "closed">) {
   if (!db) throw new Error("Firebase not configured");
-  await addDoc(collection(db, "polls"), {
+  return await addDoc(collection(db, "polls"), {
     ...input,
     votes: {},
     closed: false,
@@ -385,3 +386,106 @@ export async function deletePoll(id: string) {
   if (!db) return;
   await deleteDoc(doc(db, "polls", id));
 }
+
+// === Activity feed & notification preferences ===
+
+async function writeActivity(input: Omit<Activity, "id" | "createdAt">) {
+  if (!db) return;
+  await addDoc(collection(db, "activity"), {
+    ...input,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function useActivity(limitN = 50) {
+  const [items, setItems] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isConfigured || !db) {
+      setLoading(false);
+      return;
+    }
+    const q = query(collection(db, "activity"), orderBy("createdAt", "desc"), limit(limitN));
+    const unsub = onSnapshot(q, (snap) => {
+      setItems(
+        snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            kind: data.kind as Activity["kind"],
+            summary: (data.summary as string) ?? "",
+            actorUid: (data.actorUid as string) ?? "",
+            actorName: (data.actorName as string) ?? "",
+            actorPhoto: (data.actorPhoto as string | null) ?? null,
+            refType: data.refType as Activity["refType"],
+            refId: (data.refId as string) ?? "",
+            extra: (data.extra as Record<string, string> | undefined) ?? {},
+            createdAt: ts(data.createdAt),
+          };
+        })
+      );
+      setLoading(false);
+    });
+    return unsub;
+  }, [limitN]);
+
+  return { items, loading };
+}
+
+export async function markActivitySeen(uid: string) {
+  if (!db) return;
+  await updateDoc(doc(db, "users", uid), { lastSeenActivityAt: serverTimestamp() });
+}
+
+export async function setNotifPrefs(uid: string, prefs: NotifPrefs) {
+  if (!db) return;
+  await updateDoc(doc(db, "users", uid), { notifPrefs: prefs });
+}
+
+// === Activity writers — call these after a successful create ===
+
+export async function recordActivity(
+  actor: { uid: string; displayName: string; photoURL: string | null },
+  kind: Activity["kind"],
+  refType: Activity["refType"],
+  refId: string,
+  summary: string,
+  extra?: Record<string, string>
+) {
+  await writeActivity({
+    kind,
+    summary,
+    actorUid: actor.uid,
+    actorName: actor.displayName,
+    actorPhoto: actor.photoURL,
+    refType,
+    refId,
+    extra: extra ?? {},
+  });
+}
+
+// === Convenience: write activity from each create function ===
+// (callers invoke these alongside the actual create)
+
+export async function recordEventCreated(actor: Parameters<typeof recordActivity>[0], meetingId: string, title: string, kind: Meeting["kind"], date: string) {
+  await recordActivity(actor, "event_created", "event", meetingId, `${title} · ${kind} · ${date}`, { meetingId });
+}
+export async function recordIdeaPosted(actor: Parameters<typeof recordActivity>[0], ideaId: string, title: string) {
+  await recordActivity(actor, "idea_posted", "idea", ideaId, title, { ideaId });
+}
+export async function recordPollPosted(actor: Parameters<typeof recordActivity>[0], pollId: string, question: string) {
+  await recordActivity(actor, "poll_posted", "poll", pollId, question, { pollId });
+}
+export async function recordMessagePosted(actor: Parameters<typeof recordActivity>[0], room: ChatRoom, messageId: string, authorName: string, body: string) {
+  const summary = body.length > 80 ? `${body.slice(0, 80)}…` : body;
+  await recordActivity(actor, "message_posted", "message", messageId, `${authorName}: ${summary}`, { room });
+}
+export async function recordReadingShared(actor: Parameters<typeof recordActivity>[0], uid: string, title: string, author: string) {
+  await recordActivity(actor, "reading_shared", "reading", uid, `${title}${author ? " · " + author : ""}`, { uid });
+}
+export async function recordRecommendationAdded(actor: Parameters<typeof recordActivity>[0], recId: string, title: string) {
+  await recordActivity(actor, "recommendation_added", "reading", recId, title, { recId });
+}
+
+export { DEFAULT_NOTIF_PREFS };

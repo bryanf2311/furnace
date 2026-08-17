@@ -12,6 +12,8 @@ import {
   closePoll,
   deleteIdea,
   deletePoll,
+  recordIdeaPosted,
+  recordPollPosted,
   toggleVote,
   useIdeas,
   usePolls,
@@ -96,13 +98,14 @@ function IdeasSection({
     if (!profile || !title.trim() || submitting) return;
     setSubmitting(true);
     try {
-      await addIdea({
+      const ref = await addIdea({
         title: title.trim(),
         body: body.trim(),
         createdBy: profile.uid,
         createdByName: profile.displayName,
         source: "leader",
       });
+      await recordIdeaPosted(profile, ref.id, title.trim());
       setTitle("");
       setBody("");
     } finally {
@@ -243,7 +246,7 @@ function PollsSection({
     if (cleaned.length < 2) return;
     setSaving(true);
     try {
-      await addPoll({
+      const ref = await addPoll({
         question: question.trim(),
         options: cleaned.map<PollOption>((label) => ({
           id: label.toLowerCase().replace(/\s+/g, "-").slice(0, 32) + "-" + Math.random().toString(36).slice(2, 6),
@@ -252,6 +255,7 @@ function PollsSection({
         createdBy: profile.uid,
         createdByName: profile.displayName,
       });
+      await recordPollPosted(profile, ref.id, question.trim());
       setQuestion("");
       setOptions(["", ""]);
       setAdding(false);

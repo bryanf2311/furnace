@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Moon,
   Send,
+  Settings,
   Shield,
   Sun,
   Users,
@@ -21,6 +22,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/useTheme";
 import { BrandMark } from "./Brand";
+import { NotificationBell } from "./NotificationBell";
 import { classNames, verseForWeek } from "@/lib/utils";
 
 const NAV = [
@@ -32,6 +34,7 @@ const NAV = [
   { href: "/events", label: "Events", icon: CalendarPlus, adminOnly: true },
   { href: "/voting", label: "Voting", icon: Vote, adminOnly: true },
   { href: "/admin", label: "Leaders", icon: Users, adminOnly: true },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -171,6 +174,7 @@ NEXT_PUBLIC_ADMIN_EMAILS=you@gmail.com`}
             >
               {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
             </button>
+            <NotificationBell />
             <div className="hidden sm:flex flex-col items-end leading-tight">
               <span className="text-sm text-parchment-900 dark:text-parchment-100">{profile.displayName}</span>
               <span className="mono-cap text-parchment-500 dark:text-parchment-400">
